@@ -1,0 +1,42 @@
+// Symbol table
+// Scope level 0:
+//	Symbol Name       Page Address
+//	----------------  ------------
+//	R0_OK             3012
+//	BITS              3013
+//	VLINE             3014
+//	R0_BAD            3015
+//	STRING            302D
+//	PRINT_SLOT        3033
+//	PROCESSING        3038
+//	MOVE              303D
+//	FINISH            3041
+//	FINALOUT          3046
+//	RESTORE           3048
+//	SAVE_R0           304E
+//	SAVE_R1           304F
+//	SAVE_R2           3050
+//	SAVE_R3           3051
+//	SAVE_R4           3052
+//	SAVE_R5           3053
+//	SAVE_R6           3054
+//	SAVE_R7           3055
+//	TIME              3056
+//	COMPLEMENT        307B
+//	PRINT_CENTERED    3080
+//	Initialization    3088
+//	CALU_LEN          308A
+//	CALU_SPACE        308F
+//	PRINT_LEADSPACE   3095
+//	LOOPONE           3099
+//	PRINT_STRING      309D
+//	LOOPTWO           30A2
+//	PRINT_TRAILSPACE  30AA
+//	LOOPTHREE         30AF
+//	RESTORE_          30B3
+//	TEMP              30BC
+//	INVERSEZERO       30BD
+//	LEADINGSERIES     30BE
+//	TRAILINGSERIES    30BF
+//	SPACE             30C6
+
