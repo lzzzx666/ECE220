@@ -124,9 +124,6 @@ SAVE_R0 .BLKW #1 ;Below are the memory locations to store the value of registers
 SAVE_R1 .BLKW #1 ;and then restore them in the end of subroutine
 SAVE_R2 .BLKW #1
 SAVE_R3 .BLKW #1
-SAVE_R4 .BLKW #1
-SAVE_R5 .BLKW #1
-SAVE_R6 .BLKW #1
 SAVE_R7 .BLKW #1  
 
 TIME           .STRINGZ "070809101112131415161718192021222324" ;This is the look-up table for printing the slot
@@ -150,14 +147,14 @@ PRINT_CENTERED
 ;R5|used to store the inverse value of '0' in R5 when calculating the decimal value of space
 ;R6|used to hold the value of 6 - length anf then used it to decode look-up table
 
-    ST R0, SAVE_R0     ;First we need to store the value of 
-    ST R1, SAVE_R1     ;each register into the memory address
-    ST R2, SAVE_R2
-    ST R3, SAVE_R3
-    ST R4, SAVE_R4
-    ST R5, SAVE_R5
-    ST R6, SAVE_R6
-    ST R7, SAVE_R7
+    ST R0, SAVER0     ;First we need to store the value of 
+    ST R1, SAVER1     ;each register into the memory address
+    ST R2, SAVER2
+    ST R3, SAVER3
+    ST R4, SAVER4
+    ST R5, SAVER5
+    ST R6, SAVER6
+    ST R7, SAVER7
 
 Initialization
     ADD R2, R1, #0    ;we store the starting address of the string in R2  
@@ -215,17 +212,25 @@ PRINT_TRAILSPACE         ;use this subroutine to print the trailing space
                 BRnzp LOOPTHREE 
    
 RESTORE_    
-    LD R0, SAVE_R0 ;finally we need to restore the value into these registers
-    LD R1, SAVE_R1
-    LD R2, SAVE_R2
-    LD R3, SAVE_R3
-    LD R4, SAVE_R4
-    LD R5, SAVE_R5
-    LD R6, SAVE_R6
-    LD R7, SAVE_R7
+    LD R0, SAVER0 ;finally we need to restore the value into these registers
+    LD R1, SAVER1
+    LD R2, SAVER2
+    LD R3, SAVER3
+    LD R4, SAVER4
+    LD R5, SAVER5
+    LD R6, SAVER6
+    LD R7, SAVER7
 
     RET
 
+SAVER0 .BLKW #1 ;Below are the memory locations to store the value of registers
+SAVER1 .BLKW #1 ;and then restore them in the end of subroutine
+SAVER2 .BLKW #1
+SAVER3 .BLKW #1
+SAVER4 .BLKW #1
+SAVER5 .BLKW #1
+SAVER6 .BLKW #1
+SAVER7 .BLKW #1 
 TEMP           .BLKW #1               ; we use this temporary space to store some certain values
 INVERSEZERO    .FILL xFFD0            ; the inverse value of ASCII '0' /'s decimal expression
 LEADINGSERIES  .FILL #0               ; look-up tables for leading spaces and trailing spaces
