@@ -1,0 +1,26 @@
+// Symbol table
+// Scope level 0:
+//	Symbol Name       Page Address
+//	----------------  ------------
+//	TEST_LOOP         3002
+//	STACK_OK          300B
+//	TEST_FAIL         3012
+//	TEST_PASSED       3018
+//	TEST_DONE         301A
+//	STACK_BASE        301D
+//	TEST_VAL          301E
+//	BAD_STACK_MSG     301F
+//	BAD_RESULT_MSG    304C
+//	MSG_PASSED        3076
+//	ASCII_ZERO        3088
+//	TABLE             3089
+//	MULT              3090
+//	MULTLOOP          3093
+//	MULTDONE          3096
+//	STACKMULT         3098
+//	SM_R7             30A2
+//	FACTORIAL         30A3
+//	FAC_LOOP          30A7
+//	END               30AD
+//	SAVER7            30B1
+
