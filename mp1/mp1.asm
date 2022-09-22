@@ -5,6 +5,16 @@
 
     .ORIG    x3000
 
+
+    JSR PRINT_CENTERED
+    HALT
+    ADDR .FILL x5036
+    RR1 .FILL x007c
+
+
+
+
+
 ; Add this test code to the start of your file (just after .ORIG).
 ; I'd put it in another file, but we can't use the PRINT_SLOT and 
 ; PRINT_CENTERED labels outside of the mp1.asm file (at least, not 
@@ -67,7 +77,7 @@ R0_OK
 BITS    .FILL    xABCD    ; something unusual
 VLINE   .FILL    x7C      ; ASCII vertical line character
 R0_BAD  .STRINGZ "PRINT_SLOT changes R0!\n"
-STRING  .STRINGZ "liang"
+STRING  .STRINGZ "CLCV"
 ; your code should go here ... don't forget .ORIG and .END
 
 ;The first subroutine.
@@ -84,19 +94,16 @@ PRINT_SLOT
     ST R0, SAVE_R0     ;First we need to store the value of 
     ST R1, SAVE_R1     ;each register into the memory address
     ST R2, SAVE_R2
-    ST R3, SAVE_R3
     ST R7, SAVE_R7
 
 PROCESSING
     LEA R2, TIME 
-    AND R3, R3, #0
-    ADD R3, R3, #2     ;We make R3=2 because each o'clock time string use 2 consecutive memory location.
     AND R0, R0, #0
     ADD R1, R1, #0     ;use this to determine whether we will do the MOVE part of subroutine
 
 MOVE    
     BRz FINISH         ;use R1 as a counter to determine whether we should exit KEEP and if R1=0, we can go to the FINISH.
-    ADD R2, R2, R3     ;Go to the next initial address
+    ADD R2, R2, #2     ;Go to the next initial address
     ADD R1, R1, #-1    ;minus -1 with R1 to decide whether go to next "move"
     BRnzp MOVE
 
@@ -115,7 +122,6 @@ RESTORE
     LD R0, SAVE_R0  ;After finishing this subroutine, we need to 
     LD R1, SAVE_R1  ;restore the value of each register from memory address
     LD R2, SAVE_R2
-    LD R3, SAVE_R3
     LD R7, SAVE_R7
 
     RET
@@ -123,7 +129,6 @@ RESTORE
 SAVE_R0 .BLKW #1 ;Below are the memory locations to store the value of registers
 SAVE_R1 .BLKW #1 ;and then restore them in the end of subroutine
 SAVE_R2 .BLKW #1
-SAVE_R3 .BLKW #1
 SAVE_R7 .BLKW #1  
 
 TIME           .STRINGZ "070809101112131415161718192021222324" ;This is the look-up table for printing the slot
@@ -168,6 +173,8 @@ CALU_LEN
     BRnzp CALU_LEN
         
 CALU_SPACE        
+    AND R4, R4, #0
+    ST  R4, TEMP
     ADD R4, R3, #0    ;store the length of string into R4 for reuse
     ADD R3, R3, #-6   ;test whether R3 is bigger than 6
     BRp PRINT_STRING            
@@ -241,6 +248,6 @@ TRAILINGSERIES .FILL #0
                .FILL #2
                .FILL #3
                .FILL #3
-SPACE          .FILL x0020            ; the ASCII value of space
+SPACE          .FILL x003F            ; the ASCII value of space
        
     .END

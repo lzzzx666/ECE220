@@ -20,7 +20,7 @@ PC=x0494 IR=xB1AE PSR=x0400 (ZERO)
 R0=x0000 R1=x7FFF R2=x0000 R3=x0000 R4=x0000 R5=x0000 R6=x0000 R7=x0490 
                    x0494 x0FF9 BRNZP TRAP_HALT
 Loaded "mp1.obj" and set PC to x3000
-22:00 liang 
+22:00 liangz
 
 --- halting the LC-3 ---
 
