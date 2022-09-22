@@ -241,7 +241,6 @@ TRAILINGSERIES .FILL #0
                .FILL #2
                .FILL #3
                .FILL #3
-
 SPACE          .FILL x0020            ; the ASCII value of space
        
     .END
