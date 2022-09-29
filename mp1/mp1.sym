@@ -2,11 +2,12 @@
 // Scope level 0:
 //	Symbol Name       Page Address
 //	----------------  ------------
-//	R0_OK             3012
-//	BITS              3013
-//	VLINE             3014
-//	R0_BAD            3015
-//	STRING            302D
+//	ADDR              3003
+//	R0_OK             3016
+//	BITS              3017
+//	VLINE             3018
+//	R0_BAD            3019
+//	STRING            3031
 //	PRINT_SLOT        3036
 //	PROCESSING        303A
 //	MOVE              303D

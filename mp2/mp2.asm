@@ -1,86 +1,156 @@
-;This is the MP1 written by Liang Zhixiang for ECE220 class.
-;This machine program write two subroutines to support printing of a student's time table.
-;PRINT_SLOT aimed to print the time while PRINT_CENTERED aimed to print 
-;the other string in the student's time table.
+.ORIG    x3000
 
-    .ORIG    x3000
-
-
-    JSR PRINT_CENTERED
-    HALT
-    ADDR .FILL x5036
-    RR1 .FILL x007c
-
-
-
-
-
-; Add this test code to the start of your file (just after .ORIG).
-; I'd put it in another file, but we can't use the PRINT_SLOT and 
-; PRINT_CENTERED labels outside of the mp1.asm file (at least, not 
-; easily).
-
-; Read the comments in this file to understand what it's doing and
-; for ways that you can use this test code.  You can also just run
-; it and diff the output with the output produced by our 'gold'
-; (bug-free!) version.
-
-; After assembling mp1 with lc3as, execute the test script by typing
-; lc3sim -s script1 > your_output
-; (look at the script--it just loads mp1 with a file command, then
-; continues execution; when the LC-3 halts, the script is finished,
-; so the simulator halts).
-
-; You can then type
-; diff your_output out1
-; to compare your code's output with ours.
-;
-
-    ; feeling lazy, so I'm going to set all of the bits to the same value
-    LD     R0,BITS
-    ADD    R2,R0,#0
-    ADD    R3,R0,#0
-    ADD    R4,R0,#0
-    ADD    R5,R0,#0
-    ADD    R6,R0,#0
-
-    ; let's try PRINT_SLOT ... 11:00
-    AND    R1,R1,#0
-    ADD    R1,R1,#15
-
-    ; set a breakpoint here in the debugger, then use 'next' to
-    ; execute your subroutine and see what happens to the registers;
-    ; they're not supposed to change (except for R7)...
-
-    JSR     PRINT_SLOT     ;First ,execute the first subroutine
-    LEA     R1, STRING     ;Then change the value of R1 to the start address of string 
-    JSR     PRINT_CENTERED ;Then execute the second subroutine
-
-    ; we're short on human time to test your code, so we'll do 
-    ; something like the following instead (feel free to replicate)...
-    LD     R7,BITS
-    NOT    R7,R7
-    ADD    R7,R7,#1
-    ADD    R0,R0,R7
-    BRz    R0_OK
-    LEA    R0,R0_BAD
+    LD R1,SCHEDULE
+    LD R3,EIGHTY
+    AND R2,R2,#0
+INIT         
+    STR R2,R1,#0
+    ADD R1,R1,#1
+    ADD R3,R3,#-1
+    BRp INIT
+    LD R1,TABLE
+TRANSLATE
+    ST R1,ADDRESS
+    LDR R2,R1,#0
+    BRz FIRSTROW
+LOOPA    
+    ADD R1,R1,#1
+    LDR R2,R1,#0
+    BRz BITVECTOR 
+    BRnzp LOOPA
+BITVECTOR
+    ADD R1,R1,#1
+    LDR R3,R1,#0
+    ADD R1,R1,#1
+    AND R4,R4,#0
+    ADD R4,R4,#1
+    ST R4,BITMASK
+    LDR R6,R1,#0
+    ST R6,SLOT
+    AND R2,R2,#0
+    LD R5,MASK
+    AND R5,R5,R6
+    BRnp ERRORSLOT
+LOOPB
+    LD R4,BITMASK
+    AND R5,R5,#0
+    ADD R5,R5,#-5
+    ADD R5,R5,R2
+    BRz NEXT
+    AND R5,R3,R4
+    NOT R5,R5
+    ADD R5,R5,#1
+    ADD R5,R5,R4
+    BRz CALU
+DID    
+    ADD R2,R2,#1
+    ADD R4,R4,R4
+    ST R4,BITMASK
+    BRnzp LOOPB
+CALU
+    LD R6,SLOT
+    AND R0,R0,#0
+CALUT    
+    ADD R6,R6,#-1
+    BRn STORE
+    ADD R0,R0,#5
+    BRnzp CALUT
+STORE
+    ADD R5,R2,#0
+    ADD R0,R0,R5
+    LD R5,SCHEDULE
+    ADD R0,R0,R5
+    LDR R5,R0,#0
+    BRnp ERRORREPEAT
+    LD R5,ADDRESS
+    STR R5,R0,#0
+    BRnzp DID
+NEXT
+    ADD R1,R1,#1
+    BRnzp TRANSLATE
+ERRORSLOT
+    LD R0,ADDRESS
     PUTS
+    LEA R0,SLOTERROR
+    PUTS
+    HALT
+ERRORREPEAT
+    LD R0,ADDRESS
+    PUTS
+    LEA R0,REPEATERROR
+    PUTS
+    HALT
+FIRSTROW
+    LEA R0,SIXSPACE
+    PUTS
+    AND R5,R5,#0
+    ADD R5,R5,#5   
+    
+    LEA R1,MON
+OUTPUT1ROW
+    LD R0,VLINE
+    OUT 
+    JSR PRINT_CENTERED
+    ADD R5,R5,#-1
+    BRz OUTPUTMAIN
+    ADD R1,R1,#4
+    BRnzp OUTPUT1ROW
+OUTPUTMAIN
+    LD R2,SCHEDULE
+    AND R3,R3,#0
+    ADD R3,R3,#15
+    AND R1,R1,#0
+    ST R1,RONE
+OUTERLOOP
+    ADD R3,R3,#0
+    BRn THEEND  
+    LD R0,SPACE1  
+    OUT
+    LD R1,RONE
+    JSR PRINT_SLOT
+    ADD R1,R1,#1
+    ST R1,RONE
+    ADD R3,R3,#-1
+    AND R5,R5,#0
+    ADD R5,R5,#5
+INNERLOOP    
+    LD R0,VLINE
+    OUT
+    LDR R1,R2,#0
+    BRz   A0
+    BRnzp A1
+A0  LEA R1,SIXSPACE
+A1  JSR PRINT_CENTERED
+    ADD R2,R2,#1
+    ADD R5,R5,#-1
+    BRz   OUTERLOOP
+    BRnzp INNERLOOP
 
-R0_OK    
-
-    ; this trap changes register values, so it's not sufficient
-    ; to check that all of the registers are unchanged; HALT may
-    ; also lead to confusion because the register values differ
-    ; for other reasons (R7 differences, for example).
+THEEND
     HALT
 
-BITS    .FILL    xABCD    ; something unusual
-VLINE   .FILL    x7C      ; ASCII vertical line character
-R0_BAD  .STRINGZ "PRINT_SLOT changes R0!\n"
-STRING  .STRINGZ "CLCV"
-; your code should go here ... don't forget .ORIG and .END
 
-;The first subroutine.
+SCHEDULE    .FILL x4000
+TABLE       .FILL x5000
+EIGHTY      .FILL #80
+SPACE1      .FILL x0A
+SIXTEEN     .FILL #16
+SIXSPACE    .STRINGZ "      "
+MON         .STRINGZ "Mon"
+TUE         .STRINGZ "Tue"
+WED         .STRINGZ "Wed"
+THU         .STRINGZ "Thu"
+FRI         .STRINGZ "Fri"
+VLINE	    .FILL x7C	
+ADDRESS     .BLKW #1
+MASK        .FILL xFFF0
+BITMASK     .BLKW #1
+SLOT        .BLKW #1
+REPEATERROR .STRINGZ " conflicts with an earlier event\n"
+SLOTERROR   .STRINGZ " has an invalid slot number.\n"
+RONE        .BLKW #1
+
+
 PRINT_SLOT
 ;The PRINT_SLOT is a subroutine to print an hour. We pass a number from 0 to 15 to R1 
 ;and then use it in this subroutine.
@@ -131,7 +201,7 @@ SAVE_R1 .BLKW #1 ;and then restore them in the end of subroutine
 SAVE_R2 .BLKW #1
 SAVE_R7 .BLKW #1  
 
-TIME           .STRINGZ "070809101112131415161718192021222324" ;This is the look-up table for printing the slot
+TIME           .STRINGZ "07080910111213141516171819202122" ;This is the look-up table for printing the slot
 COMPLEMENT     .STRINGZ ":00 " ;this is the behind part of the time slot we want to output
 ;The second subroutine.
 
@@ -218,7 +288,6 @@ PRINT_TRAILSPACE         ;use this subroutine to print the trailing space
                 OUT
                 BRnzp LOOPTHREE 
    
-
 RESTORE_    
     LD R0, SAVER0 ;finally we need to restore the value into these registers
     LD R1, SAVER1
@@ -250,5 +319,6 @@ TRAILINGSERIES .FILL #0
                .FILL #3
                .FILL #3
 SPACE          .FILL x0020            ; the ASCII value of space
-       
+
+
     .END
