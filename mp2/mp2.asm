@@ -1,134 +1,175 @@
-.ORIG    x3000
+;This is the MP2 written by Liang Zhixiang for ECE220 class.
+;This machine program uses two subroutines in MP1 to support printing of a student's time table.
+;PRINT_SLOT aimed to print the time while PRINT_CENTERED aimed to print 
+;the other string in the student's time table.
 
-    LD R1,SCHEDULE
-    LD R3,EIGHTY
-    AND R2,R2,#0
+;This MP consists of three parts of the code (initialization, translation, and printing)
+;First initialize the 80 memory location from x4000 to null(x00)
+;Then translate the information from x5000 to x4000; 
+;In this step, we need to put the address of string(from x5000) we want to output into x4000
+;Finally, we need to print the string we stored in x4000
+;In the last step, we need to print the MON-FRI in the top and 07:00-22:00 in the left.
+;Codes starts here
+
+    .ORIG    x3000
+
+    LD R1,SCHEDULE     ;First we need to load the x4000 into R1
+    LD R3,EIGHTY       ;Load R3 with 80 as a counter
+    AND R2,R2,#0       ;Initialize the R2 to 0 
+
+;Initialization starts here. In this part, I initialize 80 consecutive from memory location x4000
+;Register table for Initialization
+;R1|used as a memory location pointer from x4000
+;R2|used to store the x00 into memory from x4000
+;R3|used as a counter from 80 to 0
+
 INIT         
-    STR R2,R1,#0
+    STR R2,R1,#0    ;store the x00 into memory 
     ADD R1,R1,#1
     ADD R3,R3,#-1
     BRp INIT
-    LD R1,TABLE
+    LD R1,TABLE     ;start to translate from x5000
+
+;Translation starts here.
+;In this part, we need to put the address of string(from x5000) we want to output into x4000
+;Register table for Translation
+;R0|used to calculate the offset of memory location
+;R1|used as a memory location pointer from x5000
+;R2|used as a counter and also used to determine whether stop the second part
+;R3|used to store the bitvector
+;R4|used as a bitmask for bitvector
+;R5|used to calculate the offset of memory location
+;R6|used to store the slot
+
 TRANSLATE
-    ST R1,ADDRESS
-    LDR R2,R1,#0
-    BRz FIRSTROW
+    ST R1,ADDRESS   ;First we store the R1 into address for future use
+    LDR R2,R1,#0    ;Examine whether the char is null in this step 
+    BRz FIRSTROW    ;If char is null, then go to print the whole table
 LOOPA    
-    ADD R1,R1,#1
-    LDR R2,R1,#0
-    BRz BITVECTOR 
+    ADD R1,R1,#1    ;In the LOOPA, we will finally arrive to the end of one event
+    LDR R2,R1,#0 
+    BRz BITVECTOR   ;If char==null, we then process the bitvector
     BRnzp LOOPA
-BITVECTOR
-    ADD R1,R1,#1
-    LDR R3,R1,#0
-    ADD R1,R1,#1
+BITVECTOR           ;In the BITVECTOR, we will process bitvector to determine whether output MON-FRI 
+    ADD R1,R1,#1    
+    LDR R3,R1,#0    ;Store the bitvector into R3
+    ADD R1,R1,#1    ;Add R1 with 1 to let it points to the slot
     AND R4,R4,#0
     ADD R4,R4,#1
-    ST R4,BITMASK
-    LDR R6,R1,#0
-    ST R6,SLOT
+    ST R4,BITMASK   ;Store bitmask into memory for reuse
+    LDR R6,R1,#0    ;Get the slot
+    ST R6,SLOT      ;Store slot into memory for reuse
     AND R2,R2,#0
-    LD R5,MASK
+    LD R5,MASK      ;In the mask we store xFFF0 to examine whether slot is in [0,15]
     AND R5,R5,R6
-    BRnp ERRORSLOT
-LOOPB
-    LD R4,BITMASK
+    BRnp ERRORSLOT  ;If slot is not in [0,15], we just print the error
+LOOPB               
+    LD R4,BITMASK   
     AND R5,R5,#0
-    ADD R5,R5,#-5
+    ADD R5,R5,#-5   ;Use R5 as a counter to determine whether go to NEXT
     ADD R5,R5,R2
     BRz NEXT
-    AND R5,R3,R4
-    NOT R5,R5
-    ADD R5,R5,#1
-    ADD R5,R5,R4
+    AND R5,R3,R4    ;Use bitmask to determine the bit is 1 or zero
+    NOT R5,R5       
+    ADD R5,R5,#1    ;Make R5 -> -R5
+    ADD R5,R5,R4    ;If R5=0, then we store the string into particular memory location
     BRz CALU
 DID    
-    ADD R2,R2,#1
+    ADD R2,R2,#1    ;If R5 != 0, we wil ADD R2 with 1 and right shift the R4
     ADD R4,R4,R4
     ST R4,BITMASK
-    BRnzp LOOPB
+    BRnzp LOOPB     ;Then we process the next bit of bitvector
 CALU
-    LD R6,SLOT
+    LD R6,SLOT      ;Reload the slot into R6
     AND R0,R0,#0
 CALUT    
-    ADD R6,R6,#-1
+    ADD R6,R6,#-1   ;We let R0=R0+slot*5 to get the correct address of row
     BRn STORE
     ADD R0,R0,#5
     BRnzp CALUT
 STORE
     ADD R5,R2,#0
-    ADD R0,R0,R5
+    ADD R0,R0,R5    ;We let R0=(R0+ particular bit of bitvector) to get the offset
     LD R5,SCHEDULE
-    ADD R0,R0,R5
-    LDR R5,R0,#0
-    BRnp ERRORREPEAT
+    ADD R0,R0,R5    ;Add R0 with R5 to get the correct address
+    LDR R5,R0,#0    
+    BRnp ERRORREPEAT ;If there is already some data in memory, we print the error of repeat
     LD R5,ADDRESS
-    STR R5,R0,#0
+    STR R5,R0,#0    ;Store the address of event
     BRnzp DID
 NEXT
-    ADD R1,R1,#1
+    ADD R1,R1,#1    ;ADD R1 with 1 to go to the next event
     BRnzp TRANSLATE
-ERRORSLOT
+ERRORSLOT           ;If slot is not in [0,15],we use this function to print error
     LD R0,ADDRESS
     PUTS
     LEA R0,SLOTERROR
     PUTS
     HALT
-ERRORREPEAT
+ERRORREPEAT         ;If the event is stored repeatedly, we use this function to print error
     LD R0,ADDRESS
     PUTS
     LEA R0,REPEATERROR
     PUTS
     HALT
+
+;Printing starts here.
+;In this part, we will output the whole schedule to the screen from the memory location x4000
+;Register table for printing
+;R0|used to output the some character such as '|' and also play a role in subroutine 
+;R1|used as a memory location pointer from x5000
+;R2|used as a counter and also used to determine whether stop the second part
+;R3|used to store the bitvector
+;R4|used as a bitmask for bitvector
+;R5|used to calculate the offset of memory location
+;R6|used to store the slot
+
 FIRSTROW
-    LEA R0,SIXSPACE
+    LEA R0,SIXSPACE     ;First output the 6 space
     PUTS
     AND R5,R5,#0
-    ADD R5,R5,#5   
-    
+    ADD R5,R5,#5        ;R5 as a counter
     LEA R1,MON
-OUTPUT1ROW
-    LD R0,VLINE
+OUTPUT1ROW              ;Use PRINT_CENTERED to put the MON-FRI
+    LD R0,VLINE         ;Print '|'
     OUT 
     JSR PRINT_CENTERED
     ADD R5,R5,#-1
     BRz OUTPUTMAIN
-    ADD R1,R1,#4
+    ADD R1,R1,#4        ;Add R4 with 4 to get the MON-FRI location
     BRnzp OUTPUT1ROW
 OUTPUTMAIN
-    LD R2,SCHEDULE
+    LD R2,SCHEDULE      ;Use a double nested loop to print the schedule
     AND R3,R3,#0
-    ADD R3,R3,#15
+    ADD R3,R3,#15       ;Outerloop iterate 16 times
     AND R1,R1,#0
-    ST R1,RONE
+    ST R1,RONE          ;Store R1 for reuse
 OUTERLOOP
     ADD R3,R3,#0
     BRn THEEND  
     LD R0,SPACE1  
     OUT
     LD R1,RONE
-    JSR PRINT_SLOT
+    JSR PRINT_SLOT      ;Output the slot
     ADD R1,R1,#1
     ST R1,RONE
-    ADD R3,R3,#-1
+    ADD R3,R3,#-1       ;If R3==0 just stop the iteration
     AND R5,R5,#0
-    ADD R5,R5,#5
+    ADD R5,R5,#5        ;Innerloop iterate 5 times
 INNERLOOP    
     LD R0,VLINE
     OUT
     LDR R1,R2,#0
-    BRz   A0
-    BRnzp A1
+    BRz   A0            ;If memory is empty, output the six space
+    BRnzp A1            ;If memory is empty, just use PRINT_CENTERED to print the event
 A0  LEA R1,SIXSPACE
 A1  JSR PRINT_CENTERED
     ADD R2,R2,#1
     ADD R5,R5,#-1
-    BRz   OUTERLOOP
+    BRz   OUTERLOOP     ;When R5==0, go back to the outerloop 
     BRnzp INNERLOOP
-
 THEEND
     HALT
-
 
 SCHEDULE    .FILL x4000
 TABLE       .FILL x5000
@@ -146,7 +187,7 @@ ADDRESS     .BLKW #1
 MASK        .FILL xFFF0
 BITMASK     .BLKW #1
 SLOT        .BLKW #1
-REPEATERROR .STRINGZ " conflicts with an earlier event\n"
+REPEATERROR .STRINGZ " conflicts with an earlier event.\n"
 SLOTERROR   .STRINGZ " has an invalid slot number.\n"
 RONE        .BLKW #1
 
