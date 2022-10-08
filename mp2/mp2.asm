@@ -145,10 +145,10 @@ OUTPUTMAIN
     AND R1,R1,#0
     ST R1,RONE          ;Store R1 for reuse
 OUTERLOOP
+    LD R0,SPACE1  
+    OUT 
     ADD R3,R3,#0
     BRn THEEND  
-    LD R0,SPACE1  
-    OUT
     LD R1,RONE
     JSR PRINT_SLOT      ;Output the slot
     ADD R1,R1,#1
