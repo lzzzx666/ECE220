@@ -117,12 +117,12 @@ ERRORREPEAT         ;If the event is stored repeatedly, we use this function to 
 ;In this part, we will output the whole schedule to the screen from the memory location x4000
 ;Register table for printing
 ;R0|used to output the some character such as '|' and also play a role in subroutine 
-;R1|used as a memory location pointer from x5000
-;R2|used as a counter and also used to determine whether stop the second part
-;R3|used to store the bitvector
+;R1|used as a memory location pointer to MON-FRI
+;R2|used to point to x4000 and iterate through 80 memory locations 
+;R3|used as outerloop counter 
 ;R4|used as a bitmask for bitvector
-;R5|used to calculate the offset of memory location
-;R6|used to store the slot
+;R5|used as inner loop counter
+
 
 FIRSTROW
     LEA R0,SIXSPACE     ;First output the 6 space
