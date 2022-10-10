@@ -125,8 +125,8 @@ ERRORREPEAT         ;If the event is stored repeatedly, we use this function to 
 
 
 FIRSTROW
-    LEA R0,SIXSPACE     ;First output the 6 space
-    PUTS
+    LEA R1,SIXSPACE     ;First output the 6 space
+    JSR PRINT_CENTERED
     AND R5,R5,#0
     ADD R5,R5,#5        ;R5 as a counter
     LEA R1,MON
