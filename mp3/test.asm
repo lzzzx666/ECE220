@@ -1,0 +1,20 @@
+.ORIG x6000
+
+	.FILL NAME1	; "x1"
+	.FILL x0015	; M W F
+	.FILL x0344	; 9, 13, 15,16
+
+	.FILL NAME2	; "x2"
+	.FILL x0007	; M T W
+	.FILL x0444	; 9, 13, 17
+
+	.FILL NAME3	; "x3"
+	.FILL x0007	; M T W
+	.FILL x0144	; 9, 13, 15
+
+    .FILL x0000
+NAME1	.STRINGZ "x1"
+NAME2	.STRINGZ "x2"
+NAME3	.STRINGZ "x3"
+
+	.END
