@@ -234,7 +234,8 @@ RSEVENFOUR  .BLKW #1
 ;R5|used as a stack pointer that always points to the top of the stack
 ;R6|used to detect if there is already some events day
 ;R7|multiple using for this subroutine
-;Below is the stack instruction
+
+;Below is the event structure used on the stack
 ;R5+0=the address of event string
 ;R5+1=the day vector of event
 ;R5+2=the slot vector of event
