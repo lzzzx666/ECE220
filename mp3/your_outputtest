@@ -19,14 +19,30 @@ Have fun.
 PC=x0494 IR=xB1AE PSR=x0400 (ZERO)
 R0=x0000 R1=x7FFF R2=x0000 R3=x0000 R4=x0000 R5=x0000 R6=x0000 R7=x0490 
                    x0494 x0FF9 BRNZP TRAP_HALT
-Loaded "extra.obj" and set PC to x6000
-Loaded "blocked.obj" and set PC to x5000
+Loaded "test.obj" and set PC to x6000
+Loaded "simple.obj" and set PC to x5000
 Loaded "mp3.obj" and set PC to x3000
-Could not fit all events into schedule.
+      | Mon  | Tue  | Wed  | Thu  | Fri  
+07:00 |      |      |      |      |      
+08:00 |      |      |      |      |      
+09:00 |  x2  |  x2  |  x2  |      |      
+10:00 |      |      |      |      |      
+11:00 |      |      |      |      |      
+12:00 |      |      |      |      |      
+13:00 | one  |      | one  |      | one  
+14:00 |      |      |      |      |      
+15:00 |  x3  |  x3  |  x3  |      |      
+16:00 |  x1  |      |  x1  |      |  x1  
+17:00 |      |  2   |      |      |      
+18:00 |      |      |      |      |      
+19:00 |      |      |      |      |      
+20:00 |      |      |      |      |      
+21:00 |      |      |      |      |      
+22:00 |      |      |      |      |      
 
 
 --- halting the LC-3 ---
 
 PC=x0494 IR=xB1AE PSR=x0400 (ZERO)
-R0=x0000 R1=x7FFF R2=x0000 R3=x0000 R4=x0015 R5=x8000 R6=x0000 R7=x0490 
+R0=x0000 R1=x7FFF R2=x4050 R3=xFFFF R4=x0007 R5=x0000 R6=x0000 R7=x0490 
                    x0494 x0FF9 BRNZP TRAP_HALT

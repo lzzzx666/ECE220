@@ -23,17 +23,17 @@ Loaded "extra.obj" and set PC to x6000
 Loaded "sched1.obj" and set PC to x5000
 Loaded "mp3.obj" and set PC to x3000
       | Mon  | Tue  | Wed  | Thu  | Fri  
-07:00 |      |  B   |      |  ok  |      
-08:00 |  B   |      |      |      |      
-09:00 |sample| one  | two  | two  |  F   
-10:00 |three |three |three |  F   |three 
-11:00 |      |      |  F   |      |      
-12:00 |seven |  F   |seven |exactl|seven 
-13:00 |  F   |      |      |      |      
-14:00 |      |      |      |      |      
-15:00 |      |      |      |      |      
+07:00 |      |      |      |  ok  |      
+08:00 |      |      |      |      |  B   
+09:00 |sample| one  | two  | two  | four 
+10:00 |three |three |three |three |three 
+11:00 |  C   |  C   |  C   |  C   |  C   
+12:00 |seven |exactl|seven |exactl|seven 
+13:00 |  A   |      |  A   |      |  A   
+14:00 |      |  D   |      |  D   |  D   
+15:00 |  E   |  E   |  E   |      |      
 16:00 |exacty|      |      |      |      
-17:00 |      |      |      |      |      
+17:00 |  F   |      |      |  F   |      
 18:00 |      |      |      |      |      
 19:00 |      |      |      |      |      
 20:00 |      |      |      |      |      
@@ -44,5 +44,5 @@ Loaded "mp3.obj" and set PC to x3000
 --- halting the LC-3 ---
 
 PC=x0494 IR=xB1AE PSR=x0400 (ZERO)
-R0=x0000 R1=x7FFF R2=x4050 R3=xFFFF R4=x0009 R5=x0000 R6=x0009 R7=x0490 
+R0=x0000 R1=x7FFF R2=x4050 R3=xFFFF R4=x0009 R5=x0000 R6=x0000 R7=x0490 
                    x0494 x0FF9 BRNZP TRAP_HALT
