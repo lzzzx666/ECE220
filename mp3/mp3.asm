@@ -227,8 +227,8 @@ RSEVENFOUR  .BLKW #1
 ;stack to explore alternative hours for events already on the stack
 ;Register table for printing
 ;R0|used as the pointer for extra event list from x6000
-;R1|used as a bitmask for slot vector and day vector
-;R2|used to save the current slot number 
+;R1|used to save the current slot number 
+;R2|used as a bitmask for slot vector and day vector
 ;R3|used as a counter
 ;R4|used to determine whether the stack is empty
 ;R5|used as a stack pointer that always points to the top of the stack
@@ -241,29 +241,28 @@ RSEVENFOUR  .BLKW #1
 ;R5+3=the current hour of event
 MP3
     ST R7,RSEVENTHREE
-    AND R2,R2,#0
     AND R6,R6,#0
     LD R0,EXTRA		;R0->x6000, as the extra file pointer
     LD R5,STACK		;R5->x8000, as the stack pointer
 INSERT_NEXT
-    LDR R1,R0,#0	;If we meet x0000 in extra file we just go back to main function
+    LDR R2,R0,#0	;If we meet x0000 in extra file we just go back to main function
     BRz ALL_DONE
 PUSH
     ADD R5,R5,#-4	;each event have 4 memory locations in the stack
-    STR R1,R5,#0    ;store event's address into M[R5+0]
+    STR R2,R5,#0    ;store event's address into M[R5+0]
     ADD R0,R0,#1
-    LDR R1,R0,#0
-    STR R1,R5,#1    ;store the day vector into M[R5+1]
+    LDR R2,R0,#0
+    STR R2,R5,#1    ;store the day vector into M[R5+1]
     ADD R0,R0,#1
-    LDR R1,R0,#0
-    STR R1,R5,#2    ;store the slot vector into M[R5+2]
+    LDR R2,R0,#0
+    STR R2,R5,#2    ;store the slot vector into M[R5+2]
     AND	R2,R2,#0	;init R2 and R1
     AND R1,R1,#0
-    ADD R1,R1,#1	;R1 as a bitmask through x0001 to x8000 
+    ADD R2,R2,#1	;R2 as a bitmask through x0001 to x8000 
     ADD R0,R0,#1	;R0->R0+3, R0 now points to the next 
 TRY_TO_FIND
     LDR R3,R5,#2	;M[R5+2]->R3, R3 now have the slot vector
-    AND R7,R3,R1	;determine whether this bit can be inserted
+    AND R7,R3,R2	;determine whether this bit can be inserted
 	ST R1,TEMPR1	;store R1 and R2 for reuse
 	ST R2,TEMPR2
     BRz ADD_SLOT  
@@ -272,94 +271,95 @@ ADD_SLOT
     LD R1,TEMPR1	;load R1 and R2 from memory 
 	LD R2,TEMPR2
 ADD_SLOT_H
-    ADD R2,R2,#1	
-    ADD R1,R1,R1	;right shift R1 and add R2 with 1
+    ADD R1,R1,#1	
+    ADD R2,R2,R2	;left shift R2 and add R1 with 1
     ST R1,TEMPR1	;store R1 and R2 for reuse
 	ST R2,TEMPR2
-    BRnp TRY_TO_FIND		;if R1 rightshift more than 15 times, we then pop it from stack
+    BRnp TRY_TO_FIND		;if R2 left shift more than 15 times, we then pop it from stack
     ADD R5,R5,#4	;pop the event
     ADD R0,R0,#-3	;return to last event
-    LD  R4,STACK
-    NOT R4,R4
-    ADD R4,R4,#1	
-    ADD R4,R4,R5
+    LD  R6,STACK
+    NOT R6,R6
+    ADD R6,R6,#1	
+    ADD R6,R6,R5
     BRnp POP	;when the stack is empty, we meet the conflict
     LEA	R0,ERROR_EXTRA
 	PUTS 
 	BRnzp ALL_DONE2
 POP
-    LDR R2,R5,#3	;current slot from last event
-    ADD	R7,R2,R2	
+    LDR R1,R5,#3	;current slot from last event
+    ADD	R7,R1,R1	
 	ADD	R7,R7,R7
-	ADD	R2,R7,R2    ;R2*5->R2
+	ADD	R1,R7,R1    ;R1*5->R1
     LD	R3,SCHEDULE	
-	ADD	R2,R2,R3	;5*slot+x3000-> the row we want to locate
+	ADD	R1,R1,R3	;5*slot+x3000-> the row we want to locate
 	AND	R3,R3,#0	;use R3 as a counter
 	ADD R3,R3,#5
-	LDR	R7,R5,#0	;negative event label
+	LDR	R7,R5,#0	;negate the event address
 	NOT	R7,R7
 	ADD	R7,R7,#1
 THEDAY
-	LDR	R4,R2,#0	;R4 now loads the current event
+	LDR	R4,R1,#0	;R4 now loads the current event
 	ADD	R4,R4,R7	;determine whether the string is same
 	BRnp NO_MATCH	
 	AND R4,R4,#0
-	STR R4,R2,#0	
+	STR R4,R1,#0	
 NO_MATCH
-	ADD	R2,R2,#1	
+	ADD	R1,R1,#1	
 	ADD	R3,R3,#-1		
 	BRp	THEDAY	
-	LDR	R2,R5,#3	;R2 now store the current hour
+	LDR	R1,R5,#3	;R1 now store the current hour
 	LDR	R3,R5,#2	;R3 now has the slot vector
-    AND R1,R1,#0	
-	ADD R1,R1,#1
+    AND R2,R2,#0	
+	ADD R2,R2,#1
 PLUS    
-    ADD R2,R2,#-1    
+    ADD R1,R1,#-1    
 	BRn YES
-	ADD R1,R1,R1	;use R2 as a counter to left shift R1 to get the current bitmask
+	ADD R2,R2,R2	;use R1 as a counter to left shift R2 to get the current bitmask
     BRnzp PLUS
-YES LDR	R2,R5,#3	;reload R2 from stack with current hour
+YES LDR	R1,R5,#3	;reload R1 from stack with current hour
 	BRnzp	ADD_SLOT_H	
+
 FIND_SLOT
-    STR R2,R5,#3    ;save current hour to stack
-    NOT R1,R1
-    AND R3,R3,R1	;move the current hour bit from the bit vector
+    STR R1,R5,#3    ;save current hour to stack
+    NOT R2,R2
+    AND R3,R3,R2	;move the current hour bit from the bit vector
     STR R3,R5,#2    ;save the new hour bitvector to stack
-    ADD R7,R2,R2
+    ADD R7,R1,R1
     ADD R7,R7,R7
-    ADD R2,R2,R7    ;R2*5->R2
-    LD R7,SCHEDULE
-    ADD R2,R2,R7	;SLOT*5+x4000,meaning we start from monday on that row
-    AND R1,R1,#0
-    ADD R1,R1,#1	;R1 as a bitmask for dayvector now 
+    ADD R1,R1,R7    ;R1*5->R1
+    LD R6,SCHEDULE
+    ADD R1,R1,R6	;SLOT*5+x4000,meaning we start from monday on that row
+    AND R2,R2,#0
+    ADD R2,R2,#1	;R2 as a bitmask for dayvector now 
     LDR R3,R5,#0    ;R3 loads the event's address 
     LDR R4,R5,#1    ;R4 loads the day vector
     AND R7,R7,#0
     ADD R7,R7,#5    ;R7 as a counter for iterating 5 times
 WHETHER_INSERT
-    AND R6,R4,R1	;determine whether insert to this day
+    AND R6,R4,R2	;determine whether insert to this day
     BRz NEXT_DAY
-    LDR R6,R2,#0	;if there is already some events in the memory, we try to next slot
+    LDR R6,R1,#0	;if there is already some events in the memory, we try to next slot
     BRnp ADD_SLOT
 NEXT_DAY
-    ADD R2,R2,#1	
-    ADD R1,R1,R1	;left shift R1
+    ADD R1,R1,#1	
+    ADD R2,R2,R2	;left shift R2
     ADD R7,R7,#-1
     BRp WHETHER_INSERT	;if iterate all day and no conflict, we start to save the event into address
     AND R7,R7,#0
     ADD R7,R7,#5	;set R7 as a counter again
-    ADD R2,R2,#-5	;let R2 points to Monday
-    AND R1,R1,#0	
-    ADD R1,R1,#1	;set R1 as a bitmask again
+    ADD R1,R1,#-5	;let R1 points to Monday
+    AND R2,R2,#0	
+    ADD R2,R2,#1	;set R2 as a bitmask again
 ALL_OK     
     ADD R7,R7,#-1
     BRn INSERT_NEXT	;when R7<0 we finishing inserting this event and go to next
-    AND R6,R4,R1	
-    BRz ADD_R1
-    STR R3,R2,#0	;insert the event address into schedule
-ADD_R1
-    ADD R1,R1,R1
-    ADD R2,R2,#1	;left shift R1 and add R2 with 1
+    AND R6,R4,R2	
+    BRz ADD_R2
+    STR R3,R1,#0	;insert the event address into schedule
+ADD_R2
+    ADD R2,R2,R2
+    ADD R1,R1,#1	;left shift R2 and add R1 with 1
     BRnzp ALL_OK
 ALL_DONE
     AND R0,R0,#0	;if can fit all events, return R0 with 0
