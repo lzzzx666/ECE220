@@ -248,7 +248,7 @@ MP3
 INSERT_NEXT
     LDR R1,R0,#0	;If we meet x0000 in extra file we just go back to main function
     BRz ALL_DONE
-MORE_INSERT
+PUSH
     ADD R5,R5,#-4	;each event have 4 memory locations in the stack
     STR R1,R5,#0    ;store event's address into M[R5+0]
     ADD R0,R0,#1
@@ -261,7 +261,7 @@ MORE_INSERT
     AND R1,R1,#0
     ADD R1,R1,#1	;R1 as a bitmask through x0001 to x8000 
     ADD R0,R0,#1	;R0->R0+3, R0 now points to the next 
-FIND
+TRY_TO_FIND
     LDR R3,R5,#2	;M[R5+2]->R3, R3 now have the slot vector
     AND R7,R3,R1	;determine whether this bit can be inserted
 	ST R1,TEMPR1	;store R1 and R2 for reuse
@@ -276,18 +276,18 @@ ADD_SLOT_H
     ADD R1,R1,R1	;right shift R1 and add R2 with 1
     ST R1,TEMPR1	;store R1 and R2 for reuse
 	ST R2,TEMPR2
-    BRnp FIND		;if R1 rightshift more than 15 times, we then pop it from stack
+    BRnp TRY_TO_FIND		;if R1 rightshift more than 15 times, we then pop it from stack
     ADD R5,R5,#4	;pop the event
     ADD R0,R0,#-3	;return to last event
     LD  R4,STACK
     NOT R4,R4
     ADD R4,R4,#1	
     ADD R4,R4,R5
-    BRnp CONFLICT	;when the stack is empty, we meet the conflict
+    BRnp POP	;when the stack is empty, we meet the conflict
     LEA	R0,ERROR_EXTRA
 	PUTS 
 	BRnzp ALL_DONE2
-CONFLICT
+POP
     LDR R2,R5,#3	;current slot from last event
     ADD	R7,R2,R2	
 	ADD	R7,R7,R7
