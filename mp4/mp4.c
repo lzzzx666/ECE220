@@ -41,7 +41,7 @@ int32_t print_row (int32_t r1, int32_t r2, int32_t r3, int32_t r4, int32_t width
             if(row3[i]==width-r4-r2-r3-r1-space+1) row[i]=true;   //the meaning of this loop is as same as above           
         }
     }
-    if(r4!=0){      //if r3==0, we don't need to process the fourth black region
+    if(r4!=0){      //if r4==0, we don't need to process the fourth black region
         for(int32_t i=r1+r2+r3+1+(r2!=0)+(r3!=0)+(r4!=0);i<=width-r4+1;i++){ //fourth black region can be moved in [r1+r2+r3+1+(r2!=0)+(r3!=0)+(r4!=0),width-r4+1]
             for(int32_t j=0;j<r4;j++) row4[i+j]+=1;                         //if this region passed one grid, we add grid with 1
         }
