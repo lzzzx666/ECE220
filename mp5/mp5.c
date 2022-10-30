@@ -228,9 +228,9 @@ draw_parallelogram(int32_t x_A, int32_t y_A, int32_t x_B, int32_t y_B, int32_t x
 	uint32_t ret_value = 1;
 	int32_t x_D = x_A+(x_C-x_B), y_D = y_A+(y_C-y_B);
 	ret_value &= draw_line(x_A, y_A, x_B, y_B);
+	ret_value &= draw_line(x_A, y_A, x_D, y_D);
 	ret_value &= draw_line(x_B, y_B, x_C, y_C);
-	ret_value &= draw_line(x_C, y_C, x_D, y_D);
-	ret_value &= draw_line(x_D, y_D, x_A, y_A);
+	ret_value &= draw_line(x_D, y_D, x_C, y_C);
 	return ret_value;
 }
 
@@ -297,11 +297,11 @@ rect_gradient(int32_t x, int32_t y, int32_t w, int32_t h, int32_t start_color, i
 	uint8_t end_R = (end_color & MASK_R) >> 16;
 	uint8_t end_G = (end_color & MASK_G) >> 8;
 	uint8_t end_B = end_color & MASK_B;
-	int32_t sign_R = (start_R>end_R?1:-1);
+	int32_t sign_R = (end_R>start_R?1:-1);
 	if (start_R==end_R) sign_R=0;
-	int32_t sign_G = (start_G>end_G?1:-1);
+	int32_t sign_G = (end_G>start_G?1:-1);
 	if (start_G==end_G) sign_G=0;
-	int32_t sign_B = (start_B>end_B?1:-1);
+	int32_t sign_B = (end_B>start_B?1:-1);
 	if (start_B==end_B) sign_B=0;
 	for(int32_t i=x;i<=x+w;i++)
 	{
@@ -310,7 +310,7 @@ rect_gradient(int32_t x, int32_t y, int32_t w, int32_t h, int32_t start_color, i
 			uint8_t level_R =(2*(i-x)*(end_R-start_R)+w*sign_R)/(2*(w))+start_R;
 			uint8_t level_G =(2*(i-x)*(end_G-start_G)+w*sign_G)/(2*(w))+start_G;
 			uint8_t level_B =(2*(i-x)*(end_B-start_B)+w*sign_B)/(2*(w))+start_B;
-			int32_t level = (level_R << 16) | (level_G << 8) | (level_B);	
+			int32_t level = (level_R << 16) | (level_G << 8) | (level_B << 0);	
 			set_color(level);
 			ret_value &= draw_dot(i,j);
 		}
@@ -337,11 +337,13 @@ rect_gradient(int32_t x, int32_t y, int32_t w, int32_t h, int32_t start_color, i
 #define cross(x_0, y_0, x_1, y_1) ((x_0) * (y_1) - (y_0) * (x_1))
 
 int32_t
-filled_triangle(int32_t x_A, int32_t y_A, int32_t x_B, int32_t y_B, int32_t x_C, int32_t y_C){
+draw_picture(){
 	/* Your code goes here! */
-	uint32_t return_val = 1;
-	// find minimum / maximum X / Y value of 3 vertexs
-	// which covers the triangle
+	int32_t r = 75;
+	uint32_t return_value = 1;
+	int32_t root3r = (int32_t)(1.732050 * r);		// sqrt(3) * r
+	set_color(0x5c8ebd);					// light blue
+	int32_t x_A = WIDTH / 2, y_A = HEIGHT / 2, x_B = WIDTH / 2, y_B = HEIGHT / 2 - 2 * r, x_C = WIDTH / 2 - root3r, y_C = HEIGHT / 2 - r;
 	int32_t maxX = max(x_A, max(x_B, x_C));
 	int32_t minX = min(x_A, min(x_B, x_C));
 	int32_t maxY = max(y_A, max(y_B, y_C));
@@ -358,29 +360,125 @@ filled_triangle(int32_t x_A, int32_t y_A, int32_t x_B, int32_t y_B, int32_t x_C,
 				// if (x, y) is between B-A, C-A and between A-B, C-B
 				// then (x,y) lies in the triangle
 			{
-				return_val &= draw_dot(x, y);
+				return_value &= draw_dot(x, y);
 			}
 		}
 	}
-	return return_val;
-}
-
-int32_t
-draw_picture(){
-	/* Your code goes here! */
-	int32_t r = 75, return_value = 1;
-	int32_t root3r = (int32_t)(1.732050 * r);		// sqrt(3) * r
-	set_color(0x5c8ebd);					// light blue
-	return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2 - 2 * r, WIDTH / 2 - root3r, HEIGHT / 2 - r);
-	return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2 - 2 * r, WIDTH / 2 + root3r, HEIGHT / 2 - r);
-	return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2 - root3r, HEIGHT / 2 - r, WIDTH / 2 - root3r, HEIGHT / 2 + r);
+	x_A = WIDTH / 2, y_A = HEIGHT / 2, x_B = WIDTH / 2, y_B = HEIGHT / 2 - 2 * r, x_C = WIDTH / 2 + root3r, y_C = HEIGHT / 2 - r;
+	maxX = max(x_A, max(x_B, x_C));
+	minX = min(x_A, min(x_B, x_C));
+	maxY = max(y_A, max(y_B, y_C));
+	minY = min(y_A, min(y_B, y_C));
+	for(int32_t x = minX; x <= maxX; x++) {
+		for(int32_t y = minY; y <= maxY; y++) {
+			if(
+				cross(x - x_A, y - y_A, x_B - x_A, y_B - y_A) * 
+				cross(x - x_A, y - y_A, x_C - x_A, y_C - y_A) <= 0 && 
+				cross(x - x_B, y - y_B, x_A - x_B, y_A - y_B) * 
+				cross(x - x_B, y - y_B, x_C - x_B, y_C - y_B) <= 0
+			)	// if 2 cross products have different sign,
+				// (x, y) lies between two edges.
+				// if (x, y) is between B-A, C-A and between A-B, C-B
+				// then (x,y) lies in the triangle
+			{
+				return_value &= draw_dot(x, y);
+			}
+		}
+	}
+	x_A = WIDTH / 2, y_A = HEIGHT / 2, x_B = WIDTH / 2 - root3r, y_B = HEIGHT / 2 - r, x_C = WIDTH / 2 - root3r, y_C = HEIGHT / 2 + r;
+	maxX = max(x_A, max(x_B, x_C));
+	minX = min(x_A, min(x_B, x_C));
+	maxY = max(y_A, max(y_B, y_C));
+	minY = min(y_A, min(y_B, y_C));
+	for(int32_t x = minX; x <= maxX; x++) {
+		for(int32_t y = minY; y <= maxY; y++) {
+			if(
+				cross(x - x_A, y - y_A, x_B - x_A, y_B - y_A) * 
+				cross(x - x_A, y - y_A, x_C - x_A, y_C - y_A) <= 0 && 
+				cross(x - x_B, y - y_B, x_A - x_B, y_A - y_B) * 
+				cross(x - x_B, y - y_B, x_C - x_B, y_C - y_B) <= 0
+			)	// if 2 cross products have different sign,
+				// (x, y) lies between two edges.
+				// if (x, y) is between B-A, C-A and between A-B, C-B
+				// then (x,y) lies in the triangle
+			{
+				return_value &= draw_dot(x, y);
+			}
+		}
+	}
+	//return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2 - 2 * r, WIDTH / 2 - root3r, HEIGHT / 2 - r);
+	//return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2 - 2 * r, WIDTH / 2 + root3r, HEIGHT / 2 - r);
+	//return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2 - root3r, HEIGHT / 2 - r, WIDTH / 2 - root3r, HEIGHT / 2 + r);
 	set_color(0x14588f);					// blue
-	return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2 + 2 * r, WIDTH / 2 - root3r, HEIGHT / 2 + r);
-	return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2 + 2 * r, WIDTH / 2 + root3r, HEIGHT / 2 + r);
+	x_A = WIDTH / 2, y_A = HEIGHT / 2, x_B = WIDTH / 2, y_B = HEIGHT / 2 + 2 * r, x_C = WIDTH / 2 - root3r, y_C = HEIGHT / 2 + r;
+	maxX = max(x_A, max(x_B, x_C));
+	minX = min(x_A, min(x_B, x_C));
+	maxY = max(y_A, max(y_B, y_C));
+	minY = min(y_A, min(y_B, y_C));
+	for(int32_t x = minX; x <= maxX; x++) {
+		for(int32_t y = minY; y <= maxY; y++) {
+			if(
+				cross(x - x_A, y - y_A, x_B - x_A, y_B - y_A) * 
+				cross(x - x_A, y - y_A, x_C - x_A, y_C - y_A) <= 0 && 
+				cross(x - x_B, y - y_B, x_A - x_B, y_A - y_B) * 
+				cross(x - x_B, y - y_B, x_C - x_B, y_C - y_B) <= 0
+			)	// if 2 cross products have different sign,
+				// (x, y) lies between two edges.
+				// if (x, y) is between B-A, C-A and between A-B, C-B
+				// then (x,y) lies in the triangle
+			{
+				return_value &= draw_dot(x, y);
+			}
+		}
+	}
+	x_A = WIDTH / 2, y_A = HEIGHT / 2, x_B = WIDTH / 2, y_B = HEIGHT / 2 + 2 * r, x_C = WIDTH / 2 + root3r, y_C = HEIGHT / 2 + r;
+	maxX = max(x_A, max(x_B, x_C));
+	minX = min(x_A, min(x_B, x_C));
+	maxY = max(y_A, max(y_B, y_C));
+	minY = min(y_A, min(y_B, y_C));
+	for(int32_t x = minX; x <= maxX; x++) {
+		for(int32_t y = minY; y <= maxY; y++) {
+			if(
+				cross(x - x_A, y - y_A, x_B - x_A, y_B - y_A) * 
+				cross(x - x_A, y - y_A, x_C - x_A, y_C - y_A) <= 0 && 
+				cross(x - x_B, y - y_B, x_A - x_B, y_A - y_B) * 
+				cross(x - x_B, y - y_B, x_C - x_B, y_C - y_B) <= 0
+			)	// if 2 cross products have different sign,
+				// (x, y) lies between two edges.
+				// if (x, y) is between B-A, C-A and between A-B, C-B
+				// then (x,y) lies in the triangle
+			{
+				return_value &= draw_dot(x, y);
+			}
+		}
+	}
+	//return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2 + 2 * r, WIDTH / 2 - root3r, HEIGHT / 2 + r);
+	//return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2 + 2 * r, WIDTH / 2 + root3r, HEIGHT / 2 + r);
 	set_color(0xffffff);					// white
 	return_value &= draw_circle(WIDTH / 2, HEIGHT / 2,(int32_t)(0.6 * r), (int32_t)(1.2 * r));
 	set_color(0x134475);					// dark blue
-	return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2 + root3r, HEIGHT / 2 - r, WIDTH / 2 + root3r, HEIGHT / 2 + r);
-	return 0;
+	x_A = WIDTH / 2, y_A = HEIGHT / 2, x_B = WIDTH / 2 + root3r, y_B = HEIGHT / 2 - r, x_C = WIDTH / 2 + root3r, y_C = HEIGHT / 2 + r;
+	maxX = max(x_A, max(x_B, x_C));
+	minX = min(x_A, min(x_B, x_C));
+	maxY = max(y_A, max(y_B, y_C));
+	minY = min(y_A, min(y_B, y_C));
+	for(int32_t x = minX; x <= maxX; x++) {
+		for(int32_t y = minY; y <= maxY; y++) {
+			if(
+				cross(x - x_A, y - y_A, x_B - x_A, y_B - y_A) * 
+				cross(x - x_A, y - y_A, x_C - x_A, y_C - y_A) <= 0 && 
+				cross(x - x_B, y - y_B, x_A - x_B, y_A - y_B) * 
+				cross(x - x_B, y - y_B, x_C - x_B, y_C - y_B) <= 0
+			)	// if 2 cross products have different sign,
+				// (x, y) lies between two edges.
+				// if (x, y) is between B-A, C-A and between A-B, C-B
+				// then (x,y) lies in the triangle
+			{
+				return_value &= draw_dot(x, y);
+			}
+		}
+	}
+	//return_value &= filled_triangle(WIDTH / 2, HEIGHT / 2, WIDTH / 2 + root3r, HEIGHT / 2 - r, WIDTH / 2 + root3r, HEIGHT / 2 + r);
+	return return_value;
 
 }
