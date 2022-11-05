@@ -46,7 +46,7 @@
 /* 
  * Change to 1 to play the game AFTER you have debugged in text mode.
  */
-#define USE_NCURSES 0
+#define USE_NCURSES 1
 
 /* 
  * These constants define the board width and height.  Feel free to

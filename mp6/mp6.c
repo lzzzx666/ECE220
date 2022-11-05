@@ -45,6 +45,16 @@
 
 #include "mp6.h"
 
+/*
+ * Introductory paragraph:
+ * In this machine problem, I try to implement a game of falling blocks.
+ * I will write C subroutines that perform a variety of functions for the game, 
+ * such as clearing the board, inserting pieces, moving pieces, rotating pieces,
+ * and removing full rows. In particular, we first need to empty the board then print
+ * the board. Next we need to test and place pieces. In the end we need to move piece around
+ * and removing the whole row that has been filled fully.
+ */
+
 
 /* 
  * The maximum number of blocks in one piece.  Do not change for
@@ -118,7 +128,11 @@ static const int32_t piece_def[NUM_PIECE_TYPES][4][MAX_PIECE_SIZE][2] = {
 int32_t
 empty_board (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH])
 {
-    return 0;
+    for (int32_t i = 0; i < BOARD_HEIGHT; i++)
+    {
+        for (int32_t j = 0; j < BOARD_WIDTH; j++)   b[i][j] = SPACE_EMPTY;  //use a double loop to make every position of b = SPACE_EMPTY
+    }
+    return 1;   //return 1 means emptying the board successfully
 }
 
 
@@ -142,6 +156,13 @@ mark_piece (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH],
             piece_type_t p, int32_t orient, int32_t x, int32_t y,
 	    space_type_t v)
 {
+    int32_t x_index,y_index;                                  
+    for (int32_t i = 0; i < MAX_PIECE_SIZE; i++)
+    {                            
+    	y_index = piece_def[p][orient][i][1] + y;   //calculate the (x,y) of piece that we want to marked
+        x_index = piece_def[p][orient][i][0] + x;                   
+	    b[y_index][x_index] = v;      //mark it as required                           
+    }
 }
 
 
@@ -165,7 +186,17 @@ fit_result_t
 test_piece_fit (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH], 
                 piece_type_t p, int32_t orient, int32_t x, int32_t y)
 {
-    return FIT_NO_ROOM_THERE;
+    int32_t x_index,y_index;                                  
+    for (int32_t i = 0; i < MAX_PIECE_SIZE; i++)
+    {                            
+    	x_index = piece_def[p][orient][i][0] + x;   //calculate the (x,y) of piece that we want to marked           
+        y_index = piece_def[p][orient][i][1] + y;
+        if((x_index >= BOARD_WIDTH) || (x_index <0 ) || (y_index >= BOARD_HEIGHT) || (y_index < 0)) return FIT_OUT_OF_BOARD;
+        //if any block in the piece lies outside of the board, the function must return FIT_OUT_OF_BOARD
+        if(b[y_index][x_index] != SPACE_EMPTY)    return FIT_NO_ROOM_THERE;  
+        //if any block in the piece lies outside of the board, the function must return FIT_OUT_OF_BOARD                                          
+    }
+    return FIT_SUCCESS; //otherwise return success
 }
 
 
@@ -183,6 +214,16 @@ test_piece_fit (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH],
 void
 print_board (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH])
 {
+    for (int32_t i = 0; i < BOARD_HEIGHT; i++)
+    {                             
+        for (int32_t j = 0; j < BOARD_WIDTH; j++)
+        {
+            if (b[i][j] == SPACE_EMPTY)      printf(".");   //judfe which kinds of block to print                     
+            else if (b[i][j] == SPACE_FULL)  printf("%%");  //use "%%" to print "%"
+            else if (b[i][j] == SPACE_BLOCK) printf("*"); 
+	    }
+	    printf("\n");  //Terminate each line with a newline character '\n'                                     
+    }
 }
 
 
@@ -206,7 +247,17 @@ int32_t
 try_to_move_down (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH], 
                   piece_type_t p, int32_t orient, int32_t x, int32_t y)
 {
-    return 0;
+    remove_piece(b, p, orient, x, y);   //first remove the original piece
+    if(test_piece_fit(b, p, orient, x, y + 1) == FIT_SUCCESS) //judge whether can insert to the new location
+    {
+        add_piece(b, p, orient, x, y + 1); 
+        return 1;   //if can insert, return success
+    }
+    else
+    {
+        add_piece(b, p, orient, x, y); //otherwise insert the original piece
+        return 0;   //return failure
+    }
 }
 
 
@@ -230,7 +281,17 @@ int32_t
 try_to_move_left (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH], 
                   piece_type_t p, int32_t orient, int32_t x, int32_t y)
 {
-    return 0;
+    remove_piece(b, p, orient, x, y);   //first remove the original piece
+    if(test_piece_fit(b, p, orient, x - 1, y) == FIT_SUCCESS)   //judge whether can insert to the new location
+    {
+        add_piece(b, p, orient, x - 1, y); 
+        return 1;   //if can insert, return success
+    }
+    else
+    {
+        add_piece(b, p, orient, x, y);  //otherwise insert the original piece
+        return 0;   //return failure
+    }
 }
 
 
@@ -254,9 +315,18 @@ int32_t
 try_to_move_right (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH], 
                    piece_type_t p, int32_t orient, int32_t x, int32_t y)
 {
-    return 0;
+    remove_piece(b, p, orient, x, y);   //first remove the original piece
+    if(test_piece_fit(b, p, orient, x + 1, y) == FIT_SUCCESS)   //judge whether can insert to the new location
+    {
+        add_piece(b, p, orient, x + 1 , y);     //if can insert, return success
+        return 1;
+    }
+    else
+    {
+        add_piece(b, p, orient, x, y);  //otherwise insert the original piece
+        return 0;   //return failure
+    }
 }
-
 
 /* 
  * try_to_rotate_clockwise -- 
@@ -278,7 +348,17 @@ int32_t
 try_to_rotate_clockwise (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH], 
                          piece_type_t p, int32_t orient, int32_t x, int32_t y)
 {
-    return 0;
+    remove_piece(b, p, orient, x, y);   //first remove the original piece
+    if(test_piece_fit(b, p, (orient + 1) % 4, x, y) == FIT_SUCCESS) //judge whether can rotate clockwise
+    {
+        add_piece(b, p, (orient + 1) % 4, x, y); //if can rotate clockwise return 1
+        return 1;
+    }
+    else
+    {
+        add_piece(b, p, orient, x, y);  //otherwise insert the original piece
+        return 0;   //return failure
+    }
 }
 
 
@@ -302,7 +382,17 @@ int32_t
 try_to_rotate_cc (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH], 
                   piece_type_t p, int32_t orient, int32_t x, int32_t y)
 {
-    return 0;
+    remove_piece(b, p, orient, x, y);   //first remove the original piece
+    if(test_piece_fit(b, p, (orient - 1 + 4) % 4, x, y) == FIT_SUCCESS) //judge whether can rotate counter-clockwise
+    {
+        add_piece(b, p, (orient - 1 + 4) % 4, x, y); //if can rotate counter-clockwise return 1
+        return 1;
+    }
+    else
+    {
+        add_piece(b, p, orient, x, y);  //otherwise insert the original piece
+        return 0;   //return failure
+    }
 }
 
 
@@ -320,6 +410,16 @@ try_to_rotate_cc (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH],
 void
 remove_row (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH], int row)
 {
+    int32_t counter = row;
+    while (counter > 0)
+    {
+        for(int32_t j = 0;j < BOARD_WIDTH; j++)
+        {
+            b[counter][j] = b[counter - 1][j];  //copy the value of above row to the current row
+        }
+        counter--;
+    }
+    for (int32_t i = 0;i < BOARD_WIDTH; i++)    b[0][i] = SPACE_EMPTY; //make the first row filled with SPACE_EMPTY       
 }
 
 
@@ -334,6 +434,16 @@ remove_row (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH], int row)
  */
 void
 remove_full_rows (space_type_t b[BOARD_HEIGHT][BOARD_WIDTH])
-{
+{   
+    // int32_t flag = 1;
+    for (int32_t i = 0; i < BOARD_HEIGHT; i++)
+    {
+        int32_t flag = 1; //init flag = 1
+        for (int32_t j = 0; j < BOARD_WIDTH; j++)
+        {
+            if (b[i][j]!=SPACE_FULL) flag = 0;  //if some position haven't been filled, let flag = 0
+        }
+        if (flag) remove_row(b,i);  //if all position in this row has been filled, use remove_row
+    }
 }
 
