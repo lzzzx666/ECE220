@@ -1,1 +1,784 @@
 PUT YOUR MP7 REPORT IN THIS FILE.
+
+Program 1: printRev
+
+    Argument: The string need to be reversed.
+	Functionality: Printing each string in reverse along with its length.
+	How it works: The program use recursion to find the null character and return a variable measuring 
+    the length of the string. Everytime before it return to caller, the program will print single character 
+    and increment "rest" by 1
+
+    (1)Identifying the bug
+
+    Testing cases: 
+    In this testing, I input strings of length from 0-15 to test the prev program.
+    All cases executed successfully without warning and error but get incorrect results.
+    Below are GDB outputs:
+
+        Case 1:
+        (gdb) r ""
+        Starting program: /home/lzx/ece220/mp7/printRev/prev ""
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "" reversed is "" (length 0)
+        Desired output: "" reversed is "" (length 0)
+        Error: None
+        [Inferior 1 (process 8337) exited normally]
+
+        Case 2:
+        (gdb) r "1"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "1"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "1" reversed is "1" (length 1)
+        Desired output: "1" reversed is "1" (length 1)
+        Error: None
+        [Inferior 1 (process 8371) exited normally]
+
+        Case 3:
+        (gdb) r "12"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "12"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "12" reversed is "21" (length 2)
+        Desired output: "12" reversed is "21" (length 2)
+        Error: None
+        [Inferior 1 (process 8387) exited normally]
+
+        Case 4:
+        (gdb) r "123"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123" reversed is "321" (length 3)
+        Desired output: "123" reversed is "321" (length 3)
+        Error: None
+        [Inferior 1 (process 8388) exited normally]
+
+        Case 5:
+        (gdb) r "1234"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "1234"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "1234" reversed is "4321" (length 32771)
+        Desired output: "1234" reversed is "4321" (length 4)
+        Error: The program produce the incorrect length, length should be 4.
+        [Inferior 1 (process 8389) exited normally]
+
+        Case 6:
+        (gdb) r "12345"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "12345"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "12345" reversed is "54321" (length 32772)
+        Desired output: "12345" reversed is "54321" (length 5)
+        Error: The program produce the incorrect length, length should be 5.
+        [Inferior 1 (process 8390) exited normally]
+
+        Case 7:
+        (gdb) r "123456"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123456"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123456" reversed is "654321" (length 32773)
+        Desired output: "123456" reversed is "654321" (length 6)
+        Error: The program produce the incorrect length, length should be 6.
+        [Inferior 1 (process 8391) exited normally]
+
+        Case 8:
+        (gdb) r "1234567"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "1234567"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "1234567" reversed is "7654321" (length 7)
+        Desired output: "1234567" reversed is "7654321" (length 7)
+        Error: None
+        [Inferior 1 (process 8402) exited normally]
+
+        Case 9：
+        (gdb) r "12345678"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "12345678"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "12345678" reversed is "87654321" (length 8)
+        Desired output: "12345678" reversed is "87654321" (length 8)
+        [Inferior 1 (process 8408) exited normally]
+
+        Case 10:
+        (gdb) r "123456789"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123456789"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123456789" reversed is "987654321" (length 32776)
+        Desired output: "123456789" reversed is "987654321" (length 9)
+        Error: The program produce the incorrect length, length should be 9.
+        [Inferior 1 (process 8419) exited normally]
+
+        Case 11:
+        (gdb) r "123456789a"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123456789a"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123456789a" reversed is "a987654321" (length 10)
+        Desired output: "123456789a" reversed is "a987654321" (length 10)
+        Error: None
+        [Inferior 1 (process 8435) exited normally]
+
+        Case 12:
+        (gdb) r "123456789ab"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123456789ab"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123456789ab" reversed is "ba987654321" (length 32778)
+        Desired output: "123456789ab" reversed is "ba987654321" (length 11)
+        Error: The program produce the incorrect length, length should be 11.
+        [Inferior 1 (process 8456) exited normally]
+
+        Case 13:
+        (gdb) r "123456789abc"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123456789abc"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123456789abc" reversed is "cba987654321" (length 12)
+        Desired output: "123456789abc" reversed is "cba987654321" (length 12)
+        Error: None
+        [Inferior 1 (process 8457) exited normally]
+
+        Case 14:
+        (gdb) r "123456789abcd"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123456789abcd"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123456789abcd" reversed is "dcba987654321" (length 13)
+        Desired output: "123456789abcd" reversed is "dcba987654321" (length 13)
+        Error: None
+        [Inferior 1 (process 8458) exited normally]
+
+        Case 15:
+        (gdb) r "123456789abcde"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123456789abcde"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123456789abcde" reversed is "edcba987654321" (length 32781)
+        Desired output: "123456789abcde" reversed is "edcba987654321" (length 14)
+        Error: The program produce the incorrect length, length should be 14.
+        [Inferior 1 (process 8474) exited normally]
+
+        Case 16:
+        (gdb) r "123456789abcdef"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "123456789abcdef"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+        Actual output: "123456789abcdef" reversed is "fedcba987654321" (length 15)
+        Desired output: "123456789abcdef" reversed is "fedcba987654321" (length 15)
+        Error: None
+        [Inferior 1 (process 8475) exited normally]
+
+        Bug description: when actual string length is 4, 5, 6, 9, 11, 14, or >=16, the program outputs the wrong length 
+
+---------------------------------------------------------------------------------------------------------------------
+
+    (2)Tracing the bugs
+
+    In this part, I input string "1234" as above which produces incorrec output to trace the bug.
+    I set breakpoints in the print_reverse function to examine the value of rest in each call of this function.
+    Below are GDB outputs:
+
+        (gdb) b  pr_buggy.c:48
+        Breakpoint 1 at 0x11bc: file pr_buggy.c, line 48.
+        (gdb) r "1234"
+        Starting program: /home/lzx/ece220/mp7/printRev/prev "1234"
+        9 8 7 6 5 4 3 2 1 0
+        What's on the stack now?
+
+
+        Breakpoint 1, print_reverse (s=0x7ffffffee16d "4") at pr_buggy.c:48
+        48          printf ("%c", *s);
+        (gdb) p rest
+        $1 = 32767      //rest should be 0
+        (gdb) bt
+        #0  print_reverse (s=0x7ffffffee16d "4") at pr_buggy.c:48
+        #1  0x00000000080011b9 in print_reverse (s=0x7ffffffee16c "34") at pr_buggy.c:45
+        #2  0x00000000080011b9 in print_reverse (s=0x7ffffffee16b "234") at pr_buggy.c:45
+        #3  0x00000000080011b9 in print_reverse (s=0x7ffffffee16a "1234") at pr_buggy.c:45
+        #4  0x00000000080012ae in main (argc=2, argv=0x7ffffffedec8) at prmain.c:34
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, print_reverse (s=0x7ffffffee16c "34") at pr_buggy.c:48
+        48          printf ("%c", *s);
+        (gdb) bt
+        #0  print_reverse (s=0x7ffffffee16c "34") at pr_buggy.c:48
+        #1  0x00000000080011b9 in print_reverse (s=0x7ffffffee16b "234") at pr_buggy.c:45
+        #2  0x00000000080011b9 in print_reverse (s=0x7ffffffee16a "1234") at pr_buggy.c:45
+        #3  0x00000000080012ae in main (argc=2, argv=0x7ffffffedec8) at prmain.c:34
+        (gdb) p rest
+        $2 = 32768      //rest should be 1
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, print_reverse (s=0x7ffffffee16b "234") at pr_buggy.c:48
+        48          printf ("%c", *s);
+        (gdb) p rest
+        $3 = 32769
+        (gdb) bt
+        #0  print_reverse (s=0x7ffffffee16b "234") at pr_buggy.c:48
+        #1  0x00000000080011b9 in print_reverse (s=0x7ffffffee16a "1234") at pr_buggy.c:45
+        #2  0x00000000080012ae in main (argc=2, argv=0x7ffffffedec8) at prmain.c:34
+        (gdb) p rest
+        $4 = 32769      //rest should be 2
+        (gdb) bt
+        #0  print_reverse (s=0x7ffffffee16b "234") at pr_buggy.c:48
+        #1  0x00000000080011b9 in print_reverse (s=0x7ffffffee16a "1234") at pr_buggy.c:45
+        #2  0x00000000080012ae in main (argc=2, argv=0x7ffffffedec8) at prmain.c:34
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, print_reverse (s=0x7ffffffee16a "1234") at pr_buggy.c:48
+        48          printf ("%c", *s);
+        (gdb) p rest
+        $5 = 32770      //rest should be 3
+        (gdb) bt
+        #0  print_reverse (s=0x7ffffffee16a "1234") at pr_buggy.c:48
+        #1  0x00000000080012ae in main (argc=2, argv=0x7ffffffedec8) at prmain.c:34
+        (gdb) c
+        Continuing.
+        "1234" reversed is "4321" (length 32771)        //length should be 4
+        [Inferior 1 (process 9637) exited normally]
+
+    The results produced by GDB shows that the 'rest' variable overflows when actual string length 
+    is 4, 5, 6, 9, 11, 14, or >=16. To be more specifically, the overflowing number 32767 appears at 
+    the last recursive call of print_reverse before return. 
+
+---------------------------------------------------------------------------------------------------------------------
+
+    (3)Analysis of the bug
+
+        The cause of the bug: 
+            We can see that when the output length of string is incorrect, the overflowing number 32767 
+            appears at the last recursive call of print_reverse before return.
+            So the cause of the bug is the incorrect return value at the start of recursion return. (when string length is 0)
+        How to fix this bug:
+            change the line of pr_buggy.c:41    return rest;    -->	return 0;
+     
+
+Program 2: primeNumber
+
+    (1)Identifying the bug
+    
+    Testing cases:
+    In this testing, I just simply run the program and compare it with 
+    the right version on the Lumetta's website to find the bug.
+    Below are GDB outputs:
+        (gdb) r
+        Starting program: /home/lzx/ece220/mp7/primeNumber/primeNumber 
+        Actual output:                                          
+        2 is prime.
+        3 is prime.
+        4 is prime.         //ERROR: 4 = 2 * 2, the Desired output won't have this line.
+        5 is prime.
+        7 is prime.
+        9 is prime.         //ERROR: 9 = 3 * 3, the Desired output won't have this line.
+        11 is prime.
+        13 is prime.
+        17 is prime.
+        19 is prime.
+        23 is prime.
+        25 is prime.        //ERROR: 25 = 5 * 5, the Desired output won't have this line.
+        29 is prime.
+        31 is prime.
+        37 is prime.
+        41 is prime.
+        43 is prime.
+        47 is prime.
+        49 is prime.        //ERROR: 49 = 7 * 7, the Desired output won't have this line.
+        53 is prime.
+        59 is prime.
+        61 is prime.
+        67 is prime.
+        71 is prime.
+        73 is prime.
+        79 is prime.
+        83 is prime.
+        89 is prime.
+        97 is prime.
+        101 is prime.
+        103 is prime.
+        107 is prime.
+        109 is prime.
+        113 is prime.
+        121 is prime.       //ERROR: 121 = 11 * 11, the Desired output won't have this line.
+        127 is prime.
+        131 is prime.
+        137 is prime.
+        139 is prime.
+        149 is prime.
+        151 is prime.
+        157 is prime.
+        163 is prime.
+        167 is prime.
+        169 is prime.       //ERROR: 169 = 13 * 13, the Desired output won't have this line.
+        173 is prime.
+        179 is prime.
+        181 is prime.
+        191 is prime.
+        193 is prime.
+        197 is prime.
+        199 is prime.
+        211 is prime.
+        223 is prime.
+        227 is prime.
+        229 is prime.
+        233 is prime.
+        239 is prime.
+        241 is prime.
+        251 is prime.
+        257 is prime.
+        263 is prime.
+        269 is prime.
+        271 is prime.
+        277 is prime.
+        281 is prime.
+        283 is prime.
+        289 is prime.       //ERROR: 289 = 17 * 17, the Desired output won't have this line.
+        293 is prime.
+        307 is prime.
+        311 is prime.
+        313 is prime.
+        317 is prime.
+        331 is prime.
+        337 is prime.
+        347 is prime.
+        349 is prime.
+        353 is prime.
+        359 is prime.
+        361 is prime.       //ERROR: 361 = 19 * 19, the Desired output won't have this line.
+        367 is prime.
+        373 is prime.
+        379 is prime.
+        383 is prime.
+        389 is prime.
+        397 is prime.
+        401 is prime.
+        409 is prime.
+        419 is prime.
+        421 is prime.
+        431 is prime.
+        433 is prime.
+        439 is prime.
+        443 is prime.
+        449 is prime.
+        457 is prime.
+        461 is prime.
+        463 is prime.
+        467 is prime.
+        479 is prime.
+        487 is prime.
+        491 is prime.
+        499 is prime.
+        503 is prime.
+        509 is prime.
+        521 is prime.
+        523 is prime.
+        529 is prime.       //ERROR: 529 = 23 * 23, the Desired output won't have this line.
+        541 is prime.
+        547 is prime.
+        557 is prime.
+        563 is prime.
+        569 is prime.
+        571 is prime.
+        577 is prime.
+        587 is prime.
+        593 is prime.
+        599 is prime.
+        601 is prime.
+        607 is prime.
+        613 is prime.
+        617 is prime.
+        619 is prime.
+        631 is prime.
+        641 is prime.
+        643 is prime.
+        647 is prime.
+        653 is prime.
+        659 is prime.
+        661 is prime.
+        673 is prime.
+        677 is prime.
+        683 is prime.
+        691 is prime.
+        701 is prime.
+        709 is prime.
+        719 is prime.
+        727 is prime.
+        733 is prime.
+        739 is prime.
+        743 is prime.
+        751 is prime.
+        757 is prime.
+        761 is prime.
+        769 is prime.
+        773 is prime.
+        787 is prime.
+        797 is prime.
+        809 is prime.
+        811 is prime.
+        821 is prime.
+        823 is prime.
+        827 is prime.
+        829 is prime.
+        839 is prime.
+        841 is prime.       //ERROR: 841 = 29 * 29, the Desired output won't have this line.
+        853 is prime.
+        857 is prime.
+        859 is prime.
+        863 is prime.
+        877 is prime.
+        881 is prime.
+        883 is prime.
+        887 is prime.
+        907 is prime.
+        911 is prime.
+        919 is prime.
+        929 is prime.
+        937 is prime.
+        941 is prime.
+        947 is prime.
+        953 is prime.
+        961 is prime.       //ERROR: 961 = 31 * 31, the Desired output won't have this line.
+        967 is prime.
+        971 is prime.
+        977 is prime.
+        983 is prime.
+        991 is prime.
+        997 is prime.
+        [Inferior 1 (process 474) exited normally]
+
+        Bug description: The list of prime numbers includes the square of real prime numbers.
+
+---------------------------------------------------------------------------------------------------------------------
+
+    (2)Tracing the bugs
+
+    To trace the bugs, I set breakpoints at function divides_evenly.
+    I marked my analysis in this part using '//' in the GDB output.
+    Below are GDB outputs:
+
+        (gdb) break divides_evenly
+        Breakpoint 1 at 0x1196: file primeNumber.c, line 63.
+        (gdb) r
+        Starting program: /home/lzx/ece220/mp7/primeNumber/primeNumber 
+        2 is prime.
+        3 is prime.
+        4 is prime.     //4 is included without call divides_evenly
+
+        Breakpoint 1, divides_evenly (divisor=0, value=421459543) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        5 is prime.     //5 is included after one call of divides_evenly
+                        //we can see that the program examine whether 2 is a factor of 5
+        Breakpoint 1, divides_evenly (divisor=2, value=5) at primeNumber.c:63
+        63      {
+        (gdb) c          
+        Continuing.     //6 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=6) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        7 is prime.     //7 is included after one call of divides_evenly 
+
+        Breakpoint 1, divides_evenly (divisor=2, value=7) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //8 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=8) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        9 is prime.    //9 is included and we can see that the biggest factor we examine is 2 not 3
+
+        Breakpoint 1, divides_evenly (divisor=2, value=9) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, divides_evenly (divisor=2, value=10) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //10 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=11) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        11 is prime.
+
+        Breakpoint 1, divides_evenly (divisor=3, value=11) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //11 is included after 2 call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=12) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //12 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=13) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        13 is prime.
+
+        Breakpoint 1, divides_evenly (divisor=3, value=13) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //13 is included after 2 call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=14) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //14 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=15) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, divides_evenly (divisor=3, value=15) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //15 is excluded after 2 call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=16) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //16 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=17) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, divides_evenly (divisor=3, value=17) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        17 is prime.     
+
+        Breakpoint 1, divides_evenly (divisor=4, value=17) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //17 is included after 3 call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=18) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //18 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=19) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, divides_evenly (divisor=3, value=19) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        19 is prime.
+
+        Breakpoint 1, divides_evenly (divisor=4, value=19) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //19 is included after 3 call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=20) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //20 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=21) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, divides_evenly (divisor=3, value=21) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //21 is excluded after 2 call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=22) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //22 is excluded in one call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=23) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, divides_evenly (divisor=3, value=23) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        23 is prime.
+
+        Breakpoint 1, divides_evenly (divisor=4, value=23) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //23 is included after 3 call
+
+        Breakpoint 1, divides_evenly (divisor=2, value=24) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, divides_evenly (divisor=2, value=25) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+
+        Breakpoint 1, divides_evenly (divisor=3, value=25) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.
+        25 is prime.
+
+        Breakpoint 1, divides_evenly (divisor=4, value=25) at primeNumber.c:63
+        63      {
+        (gdb) c
+        Continuing.     //25 is included and we can see that the biggest factor we examine is 4 instead of 5
+    
+    The outputs produced by GDB shows that when the program iterating the might factor of the number N,
+    the range of iterating is [2,sqrt(N)] instead of [2,sqrt(N)).
+
+---------------------------------------------------------------------------------------------------------------------
+
+    (3)Analysis of the bug    
+
+    The cause of the bug (possible): 
+        We can see that The list of prime numbers includes the square of real prime numbers.
+        The program only check whether [2,sqrt(N)) can be divide evenly but 
+        neglects the case that divides_evenly(sqrt(N), N) == 1. 
+    How to fix this bug (possible):
+        change the range of checking factor to [2,sqrt(N)].
+
+Program 3: sort
+
+    (1)Identifying the bug
+
+    Test case 1:
+    20
+    1 22 3 45 51 96 117 18 29 13 9 100 41 23 12 99 15 19 58 97
+
+    Desired output: 1 3 9 12 13 15 18 19 22 23 29 41 45 51 58 96 97 99 100 117
+
+    Actual output:
+    1 3 9 12 13 15 18 19 22 23 29 41 45 51 58 58 96 97 99 100       //58 repeated
+
+    Test case 2:
+    5
+    13 23 44 55 12
+
+    Desired output: 12 13 23 44 55
+
+    Actual output:
+    12 13 13 23 44          //13 repeated    
+
+    Test case 3:
+    8
+    1 9 3 7 2 8 4 5
+
+    Desired output: 1 2 3 4 5 7 8 9
+
+    Actual output:
+    1 2 3 3 4 5 7 8         //3 repeated
+
+    Bug description: We can see that some elements in the input repeated twice in the output.
+
+---------------------------------------------------------------------------------------------------------------------
+
+    (2)Tracing the bugs
+    In this part, I set breakpoints in heapify function and use p command to see the content of arr.
+    Below are the GDB outputs:
+
+        (gdb) b heapify
+        Breakpoint 1 at 0x12f8: file sort.c, line 19.
+        (gdb) r test1.txt
+        Starting program: /home/lzx/ece220/mp7/sort/sort test1.txt
+
+        Breakpoint 1, heapify (arr=0x7fffff5e7841 <__random+65>, n=32767, i=-73378) at sort.c:19
+        19      {
+        (gdb) s
+        20          int largest = i;  // Initialize largest as root
+        (gdb) p *arr@21
+        $2 = {1, 22, 3, 45, 51, 96, 117, 18, 29, 13, 9, 100, 41, 23, 12, 99, 15, 19, 58, 97, 58}    //58 repeated at the arr[20]
+        
+    This output produced by GDB shows that the program generates a number from input list and append it to arr[size].
+    I also set breakpoints in swap function to examine whether the adrress of two elements that passed to swap function is correct
+
+        Reading symbols from sort...
+        (gdb) b 4 if b - a == 20
+        Breakpoint 1 at 0x1279: file sort.c, line 4.
+        (gdb) r test1.txt
+        Starting program: /home/lzx/ece220/mp7/sort/sort test1.txt
+
+        Breakpoint 1, swap (a=0x8006490, b=0x80064e0) at sort.c:4
+        4       int t = *a; 
+        (gdb) p *a
+        $1 = 117
+        (gdb) 
+
+    We can see that there exists two variables with a address-distance of more than 20 are passed into swap function.
+
+---------------------------------------------------------------------------------------------------------------------
+
+    (3)Analysis of the bug    
+
+    The cause of the bug (possible): 
+        At the start, the program randomly choose a element from input list and put it into arr[size].
+        Then, when doing Max Heapify after Build Max Heap, the program will first use swap(&arr[0],&arr[size]) instead of swap(&arr[0],&arr[size-1])
+        We can see that When the element at arr[size]!= the biggest value in the list, the output will be incorret and have a repeated value.
+
+    How to fix this bug (possible):
+        The source code of heapsort may have a loop like this
+        for (i = size; i > 0; i--) {
+            swap(&arr[0], &arr[i]);
+            max_heapify(arr, i, 0);
+        }
+        We can change to this loop to avoid error
+        for (int i = size - 1; i > 0; i--) {
+            swap(&arr[0], &arr[i]);
+            heapify(arr, i, 0);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
