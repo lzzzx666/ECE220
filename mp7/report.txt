@@ -3,8 +3,8 @@ PUT YOUR MP7 REPORT IN THIS FILE.
 Program 1: printRev
 
     Argument: The string need to be reversed.
-	Functionality: Printing each string in reverse along with its length.
-	How it works: The program use recursion to find the null character and return a variable measuring 
+    Functionality: Printing each string in reverse along with its length.
+    How it works: The program use recursion to find the null character and return a variable measuring 
     the length of the string. Everytime before it return to caller, the program will print single character 
     and increment "rest" by 1
 
