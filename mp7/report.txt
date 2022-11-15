@@ -668,7 +668,7 @@ Program 2: primeNumber
         Continuing.     //25 is included and we can see that the biggest factor we examine is 4 instead of 5
     
     The outputs produced by GDB shows that when the program iterating the might factor of the number N,
-    the range of iterating is [2,sqrt(N)] instead of [2,sqrt(N)).
+    the range of iterating is [2,sqrt(N)) instead of [2,sqrt(N)].
 
 ---------------------------------------------------------------------------------------------------------------------
 
