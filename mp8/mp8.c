@@ -1,8 +1,15 @@
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdio.h>
 #include "mp8.h"
 
+/* Introduction Paragraph:
+ * This mp8 program uses recursion to implement various flood fill processes. 
+ * These operations are applicable to example images. 
+ * This mp8.c file implement the flood operation, in which the user selects one pixel 
+ * in the image along with an RGB color. In a painting analogy, the chosen color floods out 
+ * in all directions from the chosen pixel until it reaches a boundary by calling a recursive function.
+ */
 
 /*
  * basicFlood -- wrapper for flood filling recursively from a point until 
@@ -32,6 +39,28 @@ basicFlood (int32_t width, int32_t height,
 	    uint8_t* outRed, uint8_t* outGreen, 
 	    uint8_t* outBlue)
 {
+	memset(outRed, 0, width * height);	//initialize the array with 0
+	basicRecurse(width, height, inRed, inGreen, inBlue, startX, startY, outRed);	//use recursion to fill the outred array 
+	outRed[width * startY + startX] = 1;	//start position must be filled
+	for(int32_t h_i = 0 ;h_i < height; h_i++)
+	{
+		for (int32_t w_i = 0; w_i < width; w_i++)
+		{
+			if (outRed[h_i * width + w_i])	//if pixels marked, fill it with flood color
+			{
+				outRed[h_i * width + w_i] = floodR;
+				outGreen[h_i * width + w_i] = floodG;
+				outBlue[h_i * width + w_i] = floodB;
+			}
+			else		//if pixels aren't marked, fill it wit the original color
+			{
+				outRed[h_i * width + w_i] = inRed[h_i * width + w_i];
+				outGreen[h_i * width + w_i] = inGreen[h_i * width + w_i];
+				outBlue[h_i * width + w_i] = inBlue[h_i * width + w_i];
+			}
+		}
+	}
+
 }
 
 
@@ -53,7 +82,8 @@ int32_t
 colorsWithinDistSq (uint8_t r1, uint8_t g1, uint8_t b1,
                     uint8_t r2, uint8_t g2, uint8_t b2, uint32_t distSq)
 {
-    return 1;
+	if ((r1-r2)*(r1-r2)+(g1-g2)*(g1-g2)+(b1-b2)*(b1-b2)<=(distSq)) return 1;	//use Euclidean Distance to judge whether within distance
+    return 0;
 }
 
 
@@ -87,6 +117,27 @@ greyFlood (int32_t width, int32_t height,
 	   uint8_t* outRed, uint8_t* outGreen, 
 	   uint8_t* outBlue)
 {
+	memset(outRed, 0, width * height);	//initialize the array with 0
+	greyRecurse(width, height, inRed, inGreen, inBlue, startX, startY, distSq, outRed);	//use recursion to fill the outred array 
+	outRed[width * startY + startX] = 1;	//start position must be filled
+	for(int32_t h_i = 0 ;h_i < height; h_i++)
+	{
+		for (int32_t w_i = 0; w_i < width; w_i++)
+		{
+			if (outRed[h_i * width + w_i])		//if pixels marked, fill it with flood color
+			{
+				outRed[h_i * width + w_i] = floodR;
+				outGreen[h_i * width + w_i] = floodG;
+				outBlue[h_i * width + w_i] = floodB;
+			}
+			else		//if pixels aren't marked, fill it wit the original color
+			{
+				outRed[h_i * width + w_i] = inRed[h_i * width + w_i];
+				outGreen[h_i * width + w_i] = inGreen[h_i * width + w_i];
+				outBlue[h_i * width + w_i] = inBlue[h_i * width + w_i];
+			}
+		}
+	}
 }
 
 
@@ -122,5 +173,25 @@ limitedFlood (int32_t width, int32_t height,
 	      uint8_t* outRed, uint8_t* outGreen, 
 	      uint8_t* outBlue)
 {
+	memset(outRed, 0, width * height);	//initialize the array with 0
+	limitedRecurse(width, height, inRed, inGreen, inBlue, startX, startY, startX, startY, distSq, outRed);	//use recursion to fill the outred array 
+	for(int32_t h_i = 0 ;h_i < height; h_i++)
+	{
+		for (int32_t w_i = 0; w_i < width; w_i++)
+		{
+			if (outRed[h_i * width + w_i])	//if pixels marked, fill it with flood color
+			{
+				outRed[h_i * width + w_i] = floodR;
+				outGreen[h_i * width + w_i] = floodG;
+				outBlue[h_i * width + w_i] = floodB;
+			}
+			else		//if pixels aren't marked, fill it wit the original color
+			{
+				outRed[h_i * width + w_i] = inRed[h_i * width + w_i];
+				outGreen[h_i * width + w_i] = inGreen[h_i * width + w_i];
+				outBlue[h_i * width + w_i] = inBlue[h_i * width + w_i];
+			}
+		}
+	}
 }
 

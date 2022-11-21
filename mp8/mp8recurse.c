@@ -1,7 +1,14 @@
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdio.h>
 #include "mp8.h"
+
+/* Introduction Paragraph:
+ * This mp8 program uses recursion to implement various flood fill processes. 
+ * These operations are applicable to example images. 
+ * This mp8recurse.c file implement the recursive function used to determine 
+ * whether the flood operation continues recursively or stops with stopping conditions.
+ */
 
 
 /*
@@ -27,6 +34,15 @@ basicRecurse (int32_t width, int32_t height,
 	      int32_t x, int32_t y, 
 	      uint8_t* marking)
 {
+	if (marking[x+y*width] || (inRed[x+y*width] == 0xFF && inGreen[x+y*width] == 0xFF && inBlue[x+y*width] == 0xFF)) //judge whether to exit
+	{
+		return;
+	}
+	marking[x+y*width] = 1;	//marked the pixel
+	if (y > 0 )		basicRecurse(width, height, inRed, inGreen, inBlue, x, y - 1, marking);	//search the four directions of this pixel
+	if (x < width - 1)	basicRecurse(width, height, inRed, inGreen, inBlue, x + 1, y, marking);
+	if (y < height -1)	basicRecurse(width, height, inRed, inGreen, inBlue, x, y + 1, marking);
+	if (x > 0)	basicRecurse(width, height, inRed, inGreen, inBlue, x - 1, y, marking);
 }
 
 
@@ -55,6 +71,15 @@ greyRecurse (int32_t width, int32_t height,
 	     int32_t x, int32_t y, uint32_t distSq, 
 	     uint8_t* marking)
 {
+	if (marking[x+y*width] || (colorsWithinDistSq(inRed[x+y*width],inGreen[x+y*width],inBlue[x+y*width],0xFF,0xFF,0xFF,distSq))) //judge whether to exit
+	{
+		return;
+	}
+	marking[x+y*width] = 1;	//marked the pixel
+	if (y > 0 )		greyRecurse(width, height, inRed, inGreen, inBlue, x, y - 1, distSq,marking);	//search the four directions of this pixel
+	if (x < width - 1)	greyRecurse(width, height, inRed, inGreen, inBlue, x + 1, y, distSq, marking);
+	if (y < height -1)	greyRecurse(width, height, inRed, inGreen, inBlue, x, y + 1, distSq, marking);
+	if (x > 0)	greyRecurse(width, height, inRed, inGreen, inBlue, x - 1, y, distSq, marking);
 }
 
 
@@ -87,5 +112,14 @@ limitedRecurse (int32_t width, int32_t height,
 	        int32_t origX, int32_t origY, int32_t x, int32_t y, 
 		uint32_t distSq, uint8_t* marking)
 {
+	if (marking[x+y*width]||((x-origX)*(x-origX)+(y-origY)*(y-origY)>35*35)||!(colorsWithinDistSq(inRed[x+y*width],inGreen[x+y*width],inBlue[x+y*width],inRed[origX+origY*width],inGreen[origX+origY*width],inBlue[origX+origY*width],distSq)))
+	{
+		return;	//judge whether to exit
+	}
+	marking[x+y*width] = 1;	//marked the pixel
+	if (y > 0 )		limitedRecurse(width, height, inRed, inGreen, inBlue, origX, origY, x, y - 1, distSq,marking);	//search the four directions of this pixel
+	if (x < width - 1)	limitedRecurse(width, height, inRed, inGreen, inBlue, origX, origY, x + 1, y, distSq, marking);
+	if (y < height -1)	limitedRecurse(width, height, inRed, inGreen, inBlue, origX, origY, x, y + 1, distSq, marking);
+	if (x > 0)	limitedRecurse(width, height, inRed, inGreen, inBlue, origX, origY, x - 1, y, distSq, marking);
 }
 
