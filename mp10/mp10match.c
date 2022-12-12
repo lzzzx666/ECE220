@@ -24,14 +24,134 @@
 // list.
 //
 
+
+//Introductionary paragraph:
+//In this week's mp10, I extend last week’s program to make use of dynamic allocation in several ways 
+//and to attempt to pair up requests from a list of many requests. More specifically, I manage 
+//dynamic allocation of vertex sets and paths, subroutines that enable, calculate, and 
+//use “mini maps” based on a high level of a pyramid tree, and a subroutine that attempts to find a 
+//partner for a request among a linked list of unpaired requests. 
+//In this program, successful pairings must then be moved into a list of paired requests.
+
 static request_t* available = NULL;
 static request_t* shared = NULL;
 
+/*
+ * handle_request
+ *
+ * handle a new request by attempting to find walking partners among previous requests;
+ * INPUT: g--the whole graph
+ *        h--the heap
+ *        p--the pyr_tree
+ *        r--the single request
+ * OUTPUTS: two updated linked list 
+ * RETURN VALUE: 1 for success and 0 for fail
+ */
 
 int32_t
 handle_request (graph_t* g, pyr_tree_t* p, heap_t* h, request_t* r)
 {
-    return 0;
+    mark_vertex_minimap(g, p); //mark the g and p with minimap
+    r->src_vs = new_vertex_set(); //allocate vertex sets for request
+    if(!r->src_vs)  return 0;
+    r->dst_vs = new_vertex_set(); //allocate vertex sets for request
+    if(!r->dst_vs)
+    {
+        free_vertex_set(r->src_vs);
+        return 0;
+    }
+    vertex_set_t* match_src = new_vertex_set(); //allocate vertex sets for mapping
+    if(!match_src)
+    {
+        free_vertex_set(r->src_vs);
+        free_vertex_set(r->dst_vs);
+        return 0;
+    }
+    vertex_set_t* match_dst = new_vertex_set(); //allocate vertex sets for mapping
+    if(!match_dst)
+    {
+        free_vertex_set(r->src_vs);
+        free_vertex_set(r->dst_vs);
+        free_vertex_set(match_src);
+        return 0;
+    }
+    r->path = new_path();
+    if(!r->path)
+    {
+        free_vertex_set(r->src_vs);
+        free_vertex_set(r->dst_vs);
+        free_vertex_set(match_src);
+        free_vertex_set(match_dst);
+        return 0;
+    }
+    find_nodes(&(r->from), r->src_vs, p, 0);    //fill the corresponding vertex set
+    find_nodes(&(r->to), r->dst_vs, p, 0); 
+    if (r->src_vs->count == 0 || r->dst_vs->count == 0) //if no vertex return 0 and free the block
+    {
+        free_vertex_set(r->src_vs);
+        free_vertex_set(r->dst_vs);
+        free_vertex_set(match_src);
+        free_vertex_set(match_dst);
+        free_path(r->path);
+        return 0;
+    }
+    build_vertex_set_minimap(g, r->src_vs); //build minimap of r->src_vs and r->dst_vs
+    build_vertex_set_minimap(g, r->dst_vs);
+    //allocate memory for matching set
+    match_src->id_array_size = r->src_vs->count;
+    match_src->id = realloc(match_src->id,match_src->id_array_size * sizeof(int32_t));
+    match_dst->id_array_size = r->dst_vs->count;
+    match_dst->id = realloc(match_dst->id,match_dst->id_array_size * sizeof(int32_t));
+    if(match_dst->id == NULL || match_src->id == NULL)
+    {
+        //if matching set allocation fails, free the block and return 0;
+        free_vertex_set(r->src_vs);
+        free_vertex_set(r->dst_vs);
+        free_vertex_set(match_src);
+        free_vertex_set(match_dst);
+        free_path(r->path);
+        return 0;
+    }
+    request_t* prev;    //pointer to the previous element in linked list
+    for(request_t* t = available; t != NULL; prev = t, t = t->next)
+    {
+        if((!(r->src_vs->minimap & t->src_vs->minimap)) || (!(r->dst_vs->minimap & t->dst_vs->minimap))) continue;
+        //if minimap with no overlap, skip this request
+        if(merge_vertex_sets(r->src_vs, t->src_vs, match_src) && merge_vertex_sets(r->dst_vs, t->dst_vs, match_dst))
+        //determine whether two requests have intersection points and let match_src and match_dst filled with intersection end and start points
+        {
+            if(dijkstra(g, h, match_src, match_dst, r->path)) 
+            {
+                if(t == available)  available = t->next; //special case: node at head
+                else prev->next = t->next;
+                r->next = shared;
+                shared = r;
+                r->partner = t;
+                t->partner = t->next = NULL; //remove the node and update the linked list
+                free_vertex_set(t->src_vs); //free src_vs
+                free_vertex_set(r->src_vs);
+                t->src_vs = r->src_vs = match_src;
+                build_vertex_set_minimap(g, r->src_vs); //build minimap for matched set
+                free_vertex_set(t->dst_vs); //free dst_vs
+                free_vertex_set(r->dst_vs);
+                t->dst_vs = r->dst_vs = match_dst;
+                build_vertex_set_minimap(g, r->dst_vs); //build minimap for matched set
+                build_path_minimap(g, r->path);
+                t->path = r->path; //update the path
+                return 1;
+            }
+        }
+    }
+    free_vertex_set(match_src);
+    free_vertex_set(match_dst);
+    free_path(r->path); //free matching set and path
+    r->next = available;
+    r->path = NULL;
+    r->partner = NULL;
+    available = r; //insert the node at the head of linked list
+    return 1;
+
+
 }
 
 
