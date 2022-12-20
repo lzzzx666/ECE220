@@ -121,9 +121,17 @@ static void gen_op_cmp_greater (ast220_t* ast);
  *   RETURN VALUE: none
  *   SIDE EFFECTS: prints LC-3 instructions
  */
+
+static ece220_label_t* Tear_down; 
 void 
 MP11_generate_code (ast220_t* prog)
 {
+    Tear_down = label_create();
+    while(prog != NULL){
+        gen_statement(prog);
+        prog = prog->next;  /*traverse all labels*/
+    }
+    printf("%s\n", label_value(Tear_down)); /*print labels*/
 }
 
 /*
@@ -192,6 +200,29 @@ gen_statement (ast220_t* ast)
 static void 
 gen_for_statement (ast220_t* ast)
 {
+    
+    ece220_label_t* labelstart = label_create();
+    ece220_label_t* labelend = label_create();
+    if (ast->left)  gen_statement(ast->left);
+    /*if initialization expression is not null, put on the stack*/
+    printf("%s\n", label_value(labelstart));
+    gen_expression(ast->test);
+    /*run the test*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tADD R0,R0,#0\n");
+    gen_long_branch(BR_Z,labelend);
+    ast220_t* labelmid = ast->middle;
+    /*if not null just run the loop body*/
+    while(labelmid)
+    {
+        gen_statement(labelmid);
+        labelmid = labelmid->next;
+    }
+    /*if update expression is not null, put on the stack*/
+    if(ast->right)  gen_statement(ast->right);
+    gen_long_branch(BR_ALWAYS, labelstart);
+    printf("%s\n", label_value(labelend));
 }
 
 /* 
@@ -204,7 +235,34 @@ gen_for_statement (ast220_t* ast)
  */
 static void 
 gen_if_statement (ast220_t* ast)
-{
+{   
+    ece220_label_t* lab_else = label_create();
+    ece220_label_t* lab_end = label_create();
+    gen_expression(ast->test);  /*run test*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tADD R0,R0,#0\n");
+    gen_long_branch(BR_Z,lab_else); /*jump to false condition*/
+    ast220_t* label_then = ast->left;
+    while(label_then){
+        gen_statement(label_then);
+        label_then = label_then->next;/*true condition*/
+    }
+    if(ast->right)
+    {
+        gen_long_branch(BR_ALWAYS,lab_end);
+    }
+    printf("%s\n",label_value(lab_else));
+    ast220_t* label_else = ast->right;
+    if (label_else)
+    {
+        while(label_else){
+            gen_statement(label_else);
+            label_else = label_else->next;  /*false condition*/
+        }
+        printf("%s\n",label_value(lab_end));
+    }
+    
 }
 
 /* 
@@ -218,6 +276,11 @@ gen_if_statement (ast220_t* ast)
 static void 
 gen_return_statement (ast220_t* ast)
 {
+    gen_expression(ast->left);  /*calculate the return value*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tSTR R0,R5,#3\n"); /*pop out from the stack*/
+    gen_long_branch(BR_ALWAYS,Tear_down);
 }
 
 /* 
@@ -232,6 +295,9 @@ gen_return_statement (ast220_t* ast)
 static void 
 gen_pop_stack (ast220_t* ast)
 {
+    gen_expression(ast->left);
+    printf("\tADD R6,R6,#1\n");
+    /*pop the top of the stack*/
 }
 
 /* 
@@ -305,6 +371,15 @@ gen_expression (ast220_t* ast)
 static void 
 gen_push_int (ast220_t* ast)
 {
+    ece220_label_t *lab_start = label_create();
+    ece220_label_t *lab_end = label_create();    
+    printf("\tLD R0,%s\n", label_value(lab_start));
+    printf("\tADD R6,R6,#-1\n");    /*push into stack*/
+    printf("\tSTR R0,R6,#0\n");
+    printf("\tBRnzp %s\n", label_value(lab_end));
+    printf("%s\n", label_value(lab_start));
+    printf("\t.FILL #%d\n", ast->value);    /*fill the int data*/
+    printf("%s\n", label_value(lab_end));
 }
 
 /* 
@@ -319,6 +394,15 @@ gen_push_int (ast220_t* ast)
 static void 
 gen_push_str (ast220_t* ast)
 {
+    ece220_label_t *lab_start = label_create();
+    ece220_label_t *lab_end = label_create();    
+    printf("\tLEA R0,%s\n", label_value(lab_start));
+    printf("\tADD R6,R6,#-1\n");/*push into stack*/
+    printf("\tSTR R0,R6,#0\n");
+    printf("\tBRnzp %s\n", label_value(lab_end));
+    printf("%s\n", label_value(lab_start));
+    printf("\t.STRINGZ %s\n", ast->name);/*fill the string data*/
+    printf("%s\n", label_value(lab_end));
 }
 
 /* 
@@ -333,6 +417,25 @@ gen_push_str (ast220_t* ast)
 static void 
 gen_push_variable (ast220_t* ast)
 {
+    symtab_entry_t* symtab = symtab_lookup(ast->name);
+    if(!ast->left)/*case that it is an array*/
+    {
+        printf("\tLDR R0,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+        /*using 5 - is_global to determine data in R4 or R5*/
+        printf("\tADD R6,R6,#-1\n");/*push into stack*/
+        printf("\tSTR R0,R6,#0\n");
+    }
+    else/*case that it is not an array*/
+    {
+        gen_expression(ast->left);	
+        printf("\tLDR R1,R6,#0\n");
+        printf("\tADD R6,R6,#1\n");
+        printf("\tADD R0,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+        printf("\tADD R1,R1,R0\n");
+        printf("\tLDR R0,R1,#0\n");
+        printf("\tADD R6,R6,#-1\n");/*push into stack*/
+        printf("\tSTR R0,R6,#0\n");
+    }
 }
 
 /* 
@@ -348,7 +451,48 @@ gen_push_variable (ast220_t* ast)
 static void 
 gen_func_call (ast220_t* ast)
 {
+    ast220_t* pt = ast->left;
+    int32_t counter = 0;
+    while(pt)
+    {
+        gen_expression(pt);/*push ast->name on the stack*/
+        pt = pt->next;
+        counter++;
+    }
+    ece220_label_t *lab_main = label_create();
+    ece220_label_t *lab_branch = label_create();
+    printf("\tLD R0,%s\n", label_value(lab_main));
+    printf("\tJSRR R0\n");
+    printf("\tBRnzp %s\n",label_value(lab_branch));
+    /*discussion all 4 conditions*/
+    if(ast->fnum == 0)
+    {
+        printf("%s\n", label_value(lab_main));
+        printf("\t.FILL PRINTF\n");
+    }
+    else if(ast->fnum == 1)
+    {
+        printf("%s\n", label_value(lab_main));
+        printf("\t.FILL RAND\n");
+    }
+    else if(ast->fnum == 2)
+    {
+        printf("%s\n", label_value(lab_main));
+        printf("\t.FILL SCANF\n");
+    }
+    else if(ast->fnum == 3)
+    {
+        printf("%s\n", label_value(lab_main));
+        printf("\t.FILL SRAND\n");
+    }
+    printf("%s\n",label_value(lab_branch));
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tADD R6,R6,#%d\n", counter);
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");
 }
+
 
 /* 
  * gen_get_address
@@ -362,6 +506,24 @@ gen_func_call (ast220_t* ast)
 static void 
 gen_get_address (ast220_t* ast)
 {
+    symtab_entry_t* symtab = symtab_lookup(ast->left->name);/*get look up table*/
+    if(!ast->left->left)/*determine its a array or scalar*/
+    {
+        printf("\tADD R0,R%d,#%d\n",5 - symtab->is_global, symtab->offset);
+        printf("\tADD R6,R6,#-1\n");
+        printf("\tSTR R0,R6,#0\n");
+        /*R0 stores the address of scalar*/
+    }
+    else
+    {
+        gen_expression(ast->left->left);/*get array offset*/
+        printf("\tLDR R1,R6,#0\n");
+        printf("\tADD R6,R6,#1\n");
+        printf("\tADD R0,R%d,#%d", 5 - symtab->is_global, symtab->offset);
+        printf("\tADD R0,R1,#0\n");
+        printf("\tADD R6,R6,#-1\n");
+        printf("\tSTR R0,R6,#0\n");
+    }
 }
 
 /* 
@@ -378,6 +540,24 @@ gen_get_address (ast220_t* ast)
 static void 
 gen_op_assign (ast220_t* ast)
 {
+    symtab_entry_t* symtab = symtab_lookup(ast->left->name);/*get look up table*/
+    gen_expression(ast->right);
+    if(!ast->left->left)/*determine its a array or scalar*/
+    {
+        printf("\tADD R0,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+        printf("\tLDR R1,R6,#0\n");
+        printf("\tSTR R1,R0,#0\n");
+    }
+    else
+    {
+        gen_expression(ast->left->left);
+        printf("\tLDR R1,R6,#0\n");/*R1 stores the offset*/
+        printf("\tADD R6,R6,#1\n");
+        printf("\tADD R0,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+        printf("\tADD R0,R1,R0\n");
+        printf("\tLDR R1,R6,#0\n");
+        printf("\tSTR R1,R0,#0\n");
+    }
 }
 
 /* 
@@ -393,6 +573,13 @@ gen_op_assign (ast220_t* ast)
 static void 
 gen_op_pre_incr (ast220_t* ast)
 {
+    symtab_entry_t* symtab = symtab_lookup(ast->left->name);/*get look up table*/
+    printf("\tLDR R0,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+    printf("\tADD R1,R0,#1\n");
+    printf("\tSTR R1,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+    /*put it back to R4 or R5*/
+    printf("\tADD R6,R6,#-1\n");/*put new value in stack*/
+    printf("\tSTR R1,R6,#0\n");
 }
 
 /* 
@@ -408,6 +595,13 @@ gen_op_pre_incr (ast220_t* ast)
 static void 
 gen_op_pre_decr (ast220_t* ast)
 {
+    symtab_entry_t* symtab = symtab_lookup(ast->left->name);/*get look up table*/
+    printf("\tLDR R0,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+    printf("\tADD R1,R0,#-1\n");
+    printf("\tSTR R1,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+    /*put it back to R4 or R5*/
+    printf("\tADD R6,R6,#-1\n");/*put new value in stack*/
+    printf("\tSTR R1,R6,#0\n");
 }
 
 /* 
@@ -423,6 +617,13 @@ gen_op_pre_decr (ast220_t* ast)
 static void 
 gen_op_post_incr (ast220_t* ast)
 {
+    symtab_entry_t* symtab = symtab_lookup(ast->left->name);/*get look up table*/
+    printf("\tLDR R0,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+    printf("\tADD R1,R0,#1\n");
+    printf("\tSTR R1,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+    /*put it back to R4 or R5*/
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");/*put original value in stack*/
 }
 
 /* 
@@ -438,6 +639,13 @@ gen_op_post_incr (ast220_t* ast)
 static void 
 gen_op_post_decr (ast220_t* ast)
 {
+    symtab_entry_t* symtab = symtab_lookup(ast->left->name);/*get look up table*/
+    printf("\tLDR R0,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+    printf("\tADD R1,R0,#-1\n");
+    printf("\tSTR R1,R%d,#%d\n", 5 - symtab->is_global, symtab->offset);
+    /*put it back to R4 or R5*/
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");/*put original value in stack*/
 }
 
 /* 
@@ -452,6 +660,15 @@ gen_op_post_decr (ast220_t* ast)
 static void 
 gen_op_add (ast220_t* ast)
 {
+    gen_expression(ast->left); /*calculate left and right value*/
+    gen_expression(ast->right);
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tLDR R1,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tADD R0,R0,R1\n");/*make add operation*/
+    printf("\tADD R6,R6,#-1\n");/*put result in stack*/
+    printf("\tSTR R0,R6,#0\n");
 }
 
 /* 
@@ -466,6 +683,17 @@ gen_op_add (ast220_t* ast)
 static void 
 gen_op_sub (ast220_t* ast)
 {
+    gen_expression(ast->left);/*calculate left and right value*/
+    gen_expression(ast->right);
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tLDR R1,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tNOT R0,R0\n");
+    printf("\tADD R0,R0,#1\n");/*not R0 and then minus 1 to get -R0*/
+    printf("\tADD R0,R0,R1\n");/*make sub operation*/
+    printf("\tADD R6,R6,#-1\n");/*put result in stack*/
+    printf("\tSTR R0,R6,#0\n");
 }
 
 /* 
@@ -481,6 +709,19 @@ gen_op_sub (ast220_t* ast)
 static void 
 gen_op_mult (ast220_t* ast)
 {
+    gen_expression(ast->left),gen_expression(ast->right);/*calculate left and right value*/
+    ece220_label_t* labelone = label_create();
+    ece220_label_t* labeltwo = label_create();
+    printf("\tLDR R1,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tLD R3,%s\n", label_value(labelone));/*R3 store the function address*/
+    printf("\tJSRR R3\n");/*jump to function*/
+    printf("\tBRnzp %s\n%s\n", label_value(labeltwo), label_value(labelone));
+    printf("\t.FILL MULTIPLY\n%s\n", label_value(labeltwo));
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");/*store the value*/
 }
 
 /* 
@@ -496,6 +737,19 @@ gen_op_mult (ast220_t* ast)
 static void 
 gen_op_div (ast220_t* ast)
 {
+    gen_expression(ast->left), gen_expression(ast->right);/*calculate left and right value*/
+    ece220_label_t* labelone = label_create();
+    ece220_label_t* labeltwo = label_create();
+    printf("\tLDR R1,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tLD R3,%s\n", label_value(labelone));/*R3 store the function address*/
+    printf("\tJSRR R3\n");/*jump to function*/
+    printf("\tBRnzp %s\n%s\n", label_value(labeltwo), label_value(labelone));
+    printf("\t.FILL DIVIDE\n%s\n", label_value(labeltwo));
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");/*store the value*/
 }
 
 /* 
@@ -512,6 +766,19 @@ gen_op_div (ast220_t* ast)
 static void 
 gen_op_mod (ast220_t* ast)
 {
+    gen_expression(ast->left),gen_expression(ast->right);/*calculate left and right value*/
+    ece220_label_t* labelone = label_create();
+    ece220_label_t* labeltwo = label_create();
+    printf("\tLDR R1,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tLD R3,%s\n", label_value(labelone));/*R3 store the function address*/
+    printf("\tJSRR R3\n");/*jump to function*/
+    printf("\tBRnzp %s\n%s\n", label_value(labeltwo), label_value(labelone));
+    printf("\t.FILL MODULUS\n%s\n", label_value(labeltwo));
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");/*store the value*/
 }
 
 /* 
@@ -526,6 +793,11 @@ gen_op_mod (ast220_t* ast)
 static void 
 gen_op_negate (ast220_t* ast)
 {
+    gen_expression(ast->left);/*calculate value*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tNOT R0,R0\n");/*negate it and store*/
+    printf("\tADD R0,R0,#1\n");
+    printf("\tSTR R0,R6,#0\n");
 }
 
 /* 
@@ -541,6 +813,19 @@ gen_op_negate (ast220_t* ast)
 static void 
 gen_op_log_not (ast220_t* ast)
 {
+    ece220_label_t* labelT = label_create();
+    ece220_label_t* labelF = label_create();
+    gen_expression(ast->left);/*calculate expression*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R0,R0,#0\n");
+    printf("\tBRz %s\n", label_value(labelT));/*if false just store 0 and skip to end*/
+    printf("\tAND R0,R0,#0\n");
+    printf("\tSTR R0,R6,#0\n");
+    printf("\tBRnzp %s\n", label_value(labelF));
+    printf("%s\n\tAND R0,R0,#0\n", label_value(labelT));
+    printf("\tADD R0,R0,#1\n");/*if true store 1*/
+    printf("\tSTR R0,R6,#0\n");
+    printf("%s\n", label_value(labelF));
 }
 
 /* 
@@ -558,6 +843,28 @@ gen_op_log_not (ast220_t* ast)
 static void 
 gen_op_log_or (ast220_t* ast)
 {
+    ece220_label_t* labelT = label_create();
+    ece220_label_t* labelF = label_create();
+    gen_expression(ast->left);/*calculate first expression*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tADD R0,R0,#0\n");
+    gen_long_branch(BR_NP, labelT);/*if true, go to end and store 1*/
+    gen_expression(ast->right);/*calculate second expression*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tADD R0,R0,#0\n");
+    printf("\tBRnp %s\n", label_value(labelT));/*if true, go to end and store 1*/
+    printf("\tAND R0,R0,#0\n");
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");/*if false just store 0 and sthen kip to end*/
+    printf("\tBRnzp %s\n", label_value(labelF));
+    printf("%s\n",label_value(labelT));
+    printf("\tAND R0,R0,#0\n");
+    printf("\tADD R0,R0,#1\n");
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");
+    printf("%s\n",label_value(labelF));
 }
 
 /* 
@@ -575,6 +882,28 @@ gen_op_log_or (ast220_t* ast)
 static void 
 gen_op_log_and (ast220_t* ast)
 {
+    ece220_label_t* labelT = label_create();
+    ece220_label_t* labelF = label_create();
+    gen_expression(ast->left);/*calculate first expression*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tADD R0,R0,#0\n");
+    gen_long_branch(BR_Z, labelF);/*if 1st expression is false, go to end and store 0*/
+    gen_expression(ast->right);/*calculate second expression*/
+    printf("\tLDR R0,R6,#0\n");
+    printf("\tADD R6,R6,#1\n");
+    printf("\tADD R0,R0,#0\n");
+    printf("\tBRz %s\n", label_value(labelF));/*if 2rd expression is false, go to end and store 0*/
+    printf("\tAND R0,R0,#0\n");/*both true store 1*/
+    printf("\tADD R0,R0,#1\n");
+    printf("\tADD R6,R6,#-1\n");
+    printf("\tSTR R0,R6,#0\n");
+    printf("\tBRnzp %s\n", label_value(labelT));
+    printf("%s\n",label_value(labelF));
+    printf("\tAND R0,R0,#0\n");
+    printf("\tADD R6,R6,#-1\n");/*store -1*/
+    printf("\tSTR R0,R6,#0\n");
+    printf("%s\n",label_value(labelT));
 }
 
 /* 
