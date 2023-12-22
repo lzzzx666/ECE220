@@ -9,7 +9,7 @@ OBJ := isPrime.o
 ALL: ${EXE}
 
 primeNumber.o: primeNumber.c ${HEADERS} Makefile
-	${CC} -c -Wall -o $@ $<
+	${CC} -c -Wall -g -o $@ $<
 
 ${EXE}: ${SOURCES} ${OBJ}
 	$(CC) ${CFLAGS} ${SOURCES} ${OBJ} -o ${EXE} ${LDFLAGS}
